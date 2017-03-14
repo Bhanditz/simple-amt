@@ -192,7 +192,8 @@
             return Math.floor(
                 (ev.pageX - $('#zoomin').offset().left) /
                 $('#zoomin').height());
-          } else if (ev.pageY >= $('#filmstrip').offset().top) {
+          } else if (ev.pageY >= $('#filmstrip').offset().top &&
+                ev.pageY < $('#clipper').offset().top) {
             return Math.floor(
                 (ev.pageX - $('#filmstrip').offset().left) /
                 $('#filmstrip').height());

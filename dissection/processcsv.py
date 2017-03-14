@@ -9,7 +9,7 @@ with open(sys.argv[1]) as f:
     for row in reader:
         result = {
             'unit': int(row['unit']),
-            'image': imgpat % int(row['unit']),
+            'image': imgpat % (int(row['unit']) - 1),
             'phrase': row['label']
         }
         print json.dumps(result)
