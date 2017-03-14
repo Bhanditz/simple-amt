@@ -84,7 +84,8 @@
         "<span id="phrase"></span>"</h2>
       <p>
       2. Examine the highlighted regions of each of the
-      <span class="num">16</span> images.
+      <span class="num">16</span> images.  Pointing at the small images
+      will scroll the large versions into view.
       <p>click once on the image to make a
       <span class="check checked" style="margin-bottom:3px"></span>
       if the <span class="wordword">word</span> is a good description of the
@@ -146,6 +147,10 @@
         });
 
         $(document).on('mousedown', function(ev) {
+          if ($('#submit-btn').prop('disabled')) {
+            // Do not check off images if the hit is preview only.
+            return;
+          }
           var selection = hittest(ev);
           if (selection >= 0) {
             var nth = $('#checker,#checker2').
