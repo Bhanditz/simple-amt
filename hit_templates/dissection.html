@@ -1,0 +1,200 @@
+<html>
+  <head>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <script src='//cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">    
+    <style>
+    #clipper {
+      position: relative;
+      max-width: 100%;
+      overflow: hidden;
+      background: silver;
+    }
+    #zoomin {
+      position: absolute;
+      left: 0;
+    }
+    #phrase {
+      font-weight: bold;
+    }
+    #checker {
+      height: 10px;
+      position: relative;
+    }
+    .check {
+      display: inline-block;
+      height: 5px;
+      background: lime;
+      opacity: 0;
+    }
+    .centered {
+      text-align: center;
+    }
+    .choiceblock {
+      user-select: none;
+      display: inline-block;
+      margin: auto;
+      width: auto;
+    }
+    label {
+      display: block;
+      text-align: left;
+    }
+    </style>
+
+  </head>
+  <body>
+    <div class='container'>
+      <h2>Image Region Labels</h2>
+      <p>
+      1. Consider the <span class="wordword">word</span>:</p>
+      <h2 class="centered" style="margin-top:0">
+        "<span id="phrase"></span>"</h2>
+      <p>
+      2. Examine the highlighted regions in the following images:
+      </p>
+      <p>
+      <img class="example" id="filmstrip" style="max-width:100%">
+      </p>
+
+      <div id="clipper">
+      <img class="example" id="zoomin">
+      <img class="example" style="visibility:hidden">
+      </div>
+      </p>
+      <p>3. Estimate the number of regions that are well-described
+      by the <span class="wordword">word</span>:</p>
+      <div class="centered">
+      <div class="choiceblock">
+      <label>
+        <input type="radio" name="choice" value="few" disabled>
+        Few match (0-33%)
+      </label>
+      <label>
+        <input type="radio" name="choice" value="most" disabled>
+        Some match (34%-66%)
+      </label>
+      <label>
+        <input type="radio" name="choice" value="most" disabled>
+        Most match (67%-100)
+      </label>
+      </div>
+      </div>
+    </div>
+
+    {% include "simpleamt.html" %}
+
+    <script>
+      $(function() {
+        // Define default input to be used when developing this HIT.
+        var DEFAULT_INPUT = {
+          image: 'http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-0000.jpg',
+          phrase: 'outdoor roof'
+        };
+
+        $(document).on('mousemove', function(ev) {
+          if (ev.pageY >= $('#filmstrip').offset().top &&
+              ev.pageY <= $('#filmstrip').offset().top +
+              $('#filmstrip').height() + 120) {
+            var percent = (ev.pageX - $('#filmstrip').offset().left -
+                $('#filmstrip').height() / 2) /
+              ($('#filmstrip').width() - $('#filmstrip').height());
+            // Set the progress bar to green.
+            // $('#checker .check').eq(Math.round(
+            //   $('#checker .check').length * percent)).animate({
+            //   opacity: 1}, 2000, function() { $(this).addClass('done'); });
+            var maxpos = $('#zoomin').width() - $('#clipper').width();
+            var pos = percent * maxpos;
+            pos = Math.max(0, Math.min(maxpos, pos));
+            $('#zoomin').prop('targetleft', -pos);
+          }
+        });
+
+        var lastTime = (new Date).getTime();
+        function animate() {
+          var thisTime = (new Date).getTime();
+          var diffTime = (thisTime - lastTime) / 20;
+          var curr = parseFloat($('#zoomin').css('left'));
+          var diff = $('#zoomin').prop('targetleft') - curr;
+          if (Math.abs(diff) > 1) {
+             $('#zoomin').css('left', curr + Math.min(1, diffTime) * (diff < 0 ?
+                   -Math.sqrt(-diff) : Math.sqrt(diff)));
+          }
+          lastTime = thisTime;
+          requestAnimationFrame(animate);
+        };
+        animate();
+
+        function main() {
+          // Read input to the HIT. In development the default input will be
+          // used, and in deployment actual input will be used.
+          var input = simpleamt.getInput(DEFAULT_INPUT);
+          var n = input.n || 16;
+
+          $('#checker').text('');
+          for (var j = 0; j < n; ++j) {
+            $('#checker').append('<div class="check">');
+          }
+          $('#checker .check').css({width: (100 / n) + '%'})
+
+          // Use the input to set up the UI.
+          $('.example').attr('src', input.image);
+          $('#zoomin').css({left: 0}).prop('targetleft', 0);
+          var phrase = input.phrase.replace(/-[a-z]$/, '').replace(/-/g, ' ');
+          if (/ /.test(phrase)) {
+            $('.wordword').text('phrase');
+          } else {
+            $('.wordword').text('word');
+          }
+
+          $('#phrase').text(input.phrase);
+
+          // If the HIT is not in preview mode, then we need to enable the UI
+          // and set up the logic for submitting.
+          if (!simpleamt.isPreview()) {
+            enable_ui();
+
+            // You need to call this in every HIT; if you forget then you will
+            // get an error message when you try and submit the HIT.
+            simpleamt.setupSubmit();
+
+            // Set up a click handler for the submit button.
+            // Typically this will validate user output and either submit the
+            // HIT if the data is good or show an error message to the user if
+            // the data is bad. If this click handler returns false then the
+            // HIT will not be submitted.
+            // WARNING: If the click handler throws an exception
+            // then by default the HIT will be submitted; this is a fertile
+            // source of bugs.
+            $('#submit-btn').click(function() {
+              // Construct an object containing the output of this assignment.
+              var output = {
+                category: input.category,
+                example: $('#text-answer').val(),
+              };
+
+              // Validate the output
+              if (output.example.length < 3) {
+                alert('Your answer is not long enough');
+                return false;
+              } else {
+                simpleamt.setOutput(output);
+              }
+            })
+          }
+        }
+
+        function enable_ui() {
+          // Enable the UI specific to our HIT.
+          $('input[name=choice]').prop('disabled', false);
+
+          // Enable the submit button. You must do this in every HIT.
+          $('#submit-btn').prop('disabled', false);
+        }
+
+        main();
+
+      });
+    </script>
+  </body>
+</html>
