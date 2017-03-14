@@ -255,11 +255,6 @@
             // then by default the HIT will be submitted; this is a fertile
             // source of bugs.
             $('#submit-btn').click(function() {
-              // Construct an object containing the output of this assignment.
-              var output = {
-                category: input.category,
-                example: $('#text-answer').val(),
-              };
 
               // Validate the output
               var missed = n - ($('#checker .checked').length +
