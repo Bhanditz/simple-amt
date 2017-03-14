@@ -1,2 +1,2 @@
 ["http://www.wired.com/images_blogs/photos/uncategorized/2008/03/04/puppy.jpg","http://cdn.cutestpaw.com/wp-content/uploads/2011/11/Puppy-Power-l.jpg"]
-["http://ashcreekanimalclinic.com/clients/14298/images/kitten10.jpg","http://www.androscogginanimalhospital.com/blog/wp-content/uploads/2013/12/kitten-photo.jpg","http://wac.450f.edgecastcdn.net/80450F/comicsalliance.com/files/2012/05/screen-shot-2012-05-09-at-12.50.12-pm.png"]
+["http://cdn.playbuzz.com/cdn/0079c830-3406-4c05-a5c1-bc43e8f01479/7dd84d70-768b-492b-88f7-a6c70f2db2e9.jpg","https://static.independent.co.uk/s3fs-public/styles/article_large/public/thumbnails/image/2016/02/25/13/cat-getty_0.jpg","http://wac.450f.edgecastcdn.net/80450F/comicsalliance.com/files/2012/05/screen-shot-2012-05-09-at-12.50.12-pm.png"]
