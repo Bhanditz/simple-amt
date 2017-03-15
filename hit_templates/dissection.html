@@ -37,7 +37,7 @@
 }
 #thumbstrip img {
   border: 2px solid transparent;
-  height: 80px;
+  height: 60px;
 }
 #thumbstrip img.yes {
   border-color: lime;
@@ -66,8 +66,8 @@
 	border-left: 2000px solid rgba(255,255,255,0.4);
 	border-right: 2000px solid rgba(255,255,255,0.4);
 	height: 100%;
-	width: 132px;
-	left: -2064px;
+	width: 100px;
+	left: -2050px;
 	position: absolute;
 	z-index: 1;
 	box-sizing: content-box;
@@ -84,6 +84,13 @@
 </head>
 <body>
 <div class='container'>
+<p style="margin-top:10px">
+Each image has higlighted patches.  Evaluate if most of the images have
+patches that would be well-described by the boldfaced word(s) at the top.
+Enter "1" if most images have patches that match the word well,
+and "2" if most images do not. Arrow keys to navigate.  Submit after all
+image sets are evaluated.
+</p>
 <h3 class="query">Does "<span id="phrase"></span>" describe most of these patches?</h3>
 <div id="mainwindow"><div id="mainstrip"></div></div>
 <div id="thumbwindow">
@@ -95,16 +102,11 @@
 <input type="button" id="yes" class="btn btn-primary" value="Yes (1)">
 <input type="button" id="no" class="btn btn-primary" value="No (2)">
 <input type="button" id="next" class="btn btn-primary" value="Next &rarr;">
+<div style="position:absolute;display:inline-block;">
+(Done: <span id="donecount">0</span>/<span id="totalcount">64</span>)
+</div>
 <br>
 </center>
-<p style="margin-top:10px">
-Each image has higlighted patches.  Evaluate if most of the images have
-patches that would be well-described by the boldfaced word(s) at the top.
-Press the number "1" if most images have patches that match the word well,
-and "2" if most images do not. Arrow keys to navigate.  Submit after all
-image sets are evaluated.
-(<span id="donecount">0</span>/<span id="totalcount">64</span>)
-</p>
 </div>
 
 {% include "simpleamt.html" %}
@@ -184,6 +186,7 @@ $(document).on('click', '#yes,#no', function() {
 $(document).on('click', '#thumbstrip img', function() {
   var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
   if (which != current_case_number) {
+    current_case_number = which;
     showCaseNumber(which);
   }
 });
@@ -213,6 +216,9 @@ function donecount() {
 $(function() {
 
 function main() {
+  // Grab focus.
+  $('#yes').focus();
+
   // Read input to the HIT. In development the default input will be
   // used, and in deployment actual input will be used.
   var input = simpleamt.getInput(DEFAULT_INPUT);
