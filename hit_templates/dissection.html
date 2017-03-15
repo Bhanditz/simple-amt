@@ -85,16 +85,10 @@
 <body>
 <div class='container'>
 <h3 class="query">Does "<span id="phrase"></span>" describe most of these patches?</h3>
-<div id="mainwindow">
-<div id="mainstrip">
-</div>
-</div>
+<div id="mainwindow"><div id="mainstrip"></div></div>
 <div id="thumbwindow">
-<div class="thumbcenter">
-<div class="thumbframe"></div>
-</div>
-<div id="thumbstrip">
-</div>
+  <div class="thumbcenter"><div class="thumbframe"></div></div>
+  <div id="thumbstrip"></div>
 </div>
 <center>
 <input type="button" id="prev" class="btn btn-primary" value="&larr; Prev">
@@ -111,8 +105,6 @@ and "2" if most images do not. Arrow keys to navigate.  Submit after all
 image sets are evaluated.
 (<span id="donecount">0</span>/<span id="totalcount">64</span>)
 </p>
-</div>
-</div>
 </div>
 
 {% include "simpleamt.html" %}
