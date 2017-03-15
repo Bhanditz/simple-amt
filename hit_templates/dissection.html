@@ -1,200 +1,359 @@
 <html>
-  <head>
-    <script src='//cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
-    <script src='//cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
-    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">    
-    <style>
-    #clipper {
-      position: relative;
-      max-width: 100%;
-      overflow: hidden;
-      background: silver;
+<head>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">    
+<style>
+#mainwindow {
+  overflow: hidden;
+  position: relative;
+}
+#mainstrip {
+  white-space: nowrap;
+  position: relative;
+}
+#mainstrip .col-12 {
+  display: inline-block;
+}
+#mainstrip img {
+  border: 5px solid transparent;
+}
+#mainstrip img.yes {
+  border-color: lime;
+}
+#mainstrip img.no {
+  border-color: red;
+}
+#thumbwindow {
+  margin-top: 2px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+}
+#thumbstrip {
+  white-space: nowrap;
+  position: relative;
+}
+#thumbstrip img {
+  border: 2px solid transparent;
+  height: 80px;
+}
+#thumbstrip img.yes {
+  border-color: lime;
+}
+#thumbstrip img.no {
+  border-color: red;
+}
+#submit-btn {
+  margin-top: 5px;
+}
+#yes.active {
+  background: lime;
+}
+#no.active {
+  background: red;
+}
+.thumbox {
+  position: relative;
+}
+.thumbcenter {
+  display: inline-block;
+  width: 0; height: 100%;
+  position: absolute;
+}
+.thumbframe {
+	border-left: 2000px solid rgba(255,255,255,0.4);
+	border-right: 2000px solid rgba(255,255,255,0.4);
+	height: 100%;
+	width: 132px;
+	left: -2064px;
+	position: absolute;
+	z-index: 1;
+	box-sizing: content-box;
+  pointer-events: none;
+}
+.query {
+  text-align: center;
+}
+#phrase {
+  font-weight: bold;
+}
+</style>
+
+</head>
+<body>
+<div class='container'>
+<h3 class="query">Does "<span id="phrase"></span>" describe most of these patches?</h3>
+<div id="mainwindow">
+<div id="mainstrip">
+</div>
+</div>
+<div id="thumbwindow">
+<div class="thumbcenter">
+<div class="thumbframe"></div>
+</div>
+<div id="thumbstrip">
+</div>
+</div>
+<center>
+<input type="button" id="prev" class="btn btn-primary" value="&larr; Prev">
+<input type="button" id="yes" class="btn btn-primary" value="Yes (1)">
+<input type="button" id="no" class="btn btn-primary" value="No (2)">
+<input type="button" id="next" class="btn btn-primary" value="Next &rarr;">
+<br>
+</center>
+<p style="margin-top:10px">
+Each image has higlighted patches.  Evaluate if most of the images have
+patches that would be well-described by the boldfaced word(s) at the top.
+Press the number "1" if most images have patches that match the word well,
+and "2" if most images do not. Arrow keys to navigate.  Submit after all
+image sets are evaluated.
+(<span id="donecount">0</span>/<span id="totalcount">64</span>)
+</p>
+</div>
+</div>
+</div>
+
+{% include "simpleamt.html" %}
+
+<script>
+var current_case_number = 0;
+var max_case_number = 1;
+var case_data = [];
+var evaluations = [];
+
+function showCaseNumber(casenumber) {
+  var pos = $('#img_' + casenumber).position();
+  $('#mainstrip').stop().animate({left: -pos.left});
+  var tpos = $('#thumb_' + casenumber).position();
+  $('#thumbstrip').stop().animate({left: ($('#thumbstrip').width() -
+        $('#thumb_' + casenumber).width()) / 2 - tpos.left}, clearActive);
+  $('#phrase').text(readable(case_data[casenumber].phrase));
+}
+
+function clearActive() {
+  $('.btn').removeClass('active');
+}
+
+function readable(phrase) {
+  phrase = phrase.replace(/-\w$/, '');
+  phrase = phrase.replace(/[-_]/g, ' ');
+  phrase = phrase.replace(/^pitch$/, 'ballfield'); // UK -> US word
+  return phrase;
+}
+
+function advance(direction) {
+  var orig = current_case_number;
+  current_case_number += direction;
+  current_case_number = Math.max(0, Math.min(
+        max_case_number - 1, current_case_number));
+  if (orig != current_case_number) {
+     showCaseNumber(current_case_number);
+  }
+}
+
+function vote(casenumber, yes) {
+  evaluations[casenumber] = yes;
+  $('#donecount').text(donecount());
+  if (yes) {
+    $('#img_' + casenumber + ',#thumb_' + casenumber).
+      removeClass('no').addClass('yes');
+  } else {
+    $('#img_' + casenumber + ',#thumb_' + casenumber).
+      removeClass('yes').addClass('no');
+  }
+}
+
+var resizeTimer = 0;
+$(window).on('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() { showCaseNumber(current_case_number); },
+      250);
+});
+
+$(document).on('click', '#next,#prev', function() {
+  clearActive();
+  $(this).addClass('active');
+  advance($(this).is('#prev') ? -1 : 1);
+});
+
+$(document).on('click', '#yes,#no', function() {
+  clearActive();
+  if ($('#submit-btn').prop('disabled')) {
+    // Do not allow voting if the form is not active.
+    return;
+  }
+  $(this).addClass('active');
+  vote(current_case_number, $(this).is('#yes'));
+  advance(1);
+});
+
+$(document).on('click', '#thumbstrip img', function() {
+  var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
+  if (which != current_case_number) {
+    showCaseNumber(which);
+  }
+});
+
+$(document).on('keydown', function(ev) {
+  if (ev.which == 37 || ev.which == 38 || ev.which == 8) {
+    $('#prev').trigger('click');
+  } else if (ev.which == 39 || ev.which == 40) {
+    $('#next').trigger('click');
+  } else if (ev.which == '1'.charCodeAt(0)) {
+    $('#yes').trigger('click');
+  } else if (ev.which == '2'.charCodeAt(0)) {
+    $('#no').trigger('click');
+  }
+});
+
+function donecount() {
+  var count = 0;
+  for (var j = 0; j < evaluations.length; ++j) {
+    if (evaluations[j] != null) {
+      count += 1;
     }
-    #zoomin {
-      position: absolute;
-      left: 0;
-    }
-    #phrase {
-      font-weight: bold;
-    }
-    #checker {
-      height: 10px;
-      position: relative;
-    }
-    .check {
-      display: inline-block;
-      height: 5px;
-      background: lime;
-      opacity: 0;
-    }
-    .centered {
-      text-align: center;
-    }
-    .choiceblock {
-      user-select: none;
-      display: inline-block;
-      margin: auto;
-      width: auto;
-    }
-    label {
-      display: block;
-      text-align: left;
-    }
-    </style>
+  }
+  return count;
+}
 
-  </head>
-  <body>
-    <div class='container'>
-      <h2>Image Region Labels</h2>
-      <p>
-      1. Consider the <span class="wordword">word</span>:</p>
-      <h2 class="centered" style="margin-top:0">
-        "<span id="phrase"></span>"</h2>
-      <p>
-      2. Examine the highlighted regions in the following images:
-      </p>
-      <p>
-      <img class="example" id="filmstrip" style="max-width:100%">
-      </p>
+$(function() {
 
-      <div id="clipper">
-      <img class="example" id="zoomin">
-      <img class="example" style="visibility:hidden">
-      </div>
-      </p>
-      <p>3. Estimate the number of regions that are well-described
-      by the <span class="wordword">word</span>:</p>
-      <div class="centered">
-      <div class="choiceblock">
-      <label>
-        <input type="radio" name="choice" value="few" disabled>
-        Few match (0-33%)
-      </label>
-      <label>
-        <input type="radio" name="choice" value="most" disabled>
-        Some match (34%-66%)
-      </label>
-      <label>
-        <input type="radio" name="choice" value="most" disabled>
-        Most match (67%-100)
-      </label>
-      </div>
-      </div>
-    </div>
+function main() {
+  // Read input to the HIT. In development the default input will be
+  // used, and in deployment actual input will be used.
+  var input = simpleamt.getInput(DEFAULT_INPUT);
+  case_data = input.cases;
 
-    {% include "simpleamt.html" %}
+  var casecount = input.cases.length;
+  $('#totalcount').text(casecount);
+  for (var j = 0; j < casecount; ++j) {
+    var record = input.cases[j];
+    var div = $('<div class="col-12">').appendTo('#mainstrip');
+    var img = $('<img class="img-responsive">').prop('id', 'img_' + j).attr(
+        'src', record.image).appendTo(div);
+    var thumb = $('<img>').prop('id', 'thumb_' + j).attr(
+        'src', record.image).appendTo('#thumbstrip');
+  }
+  max_case_number = casecount;
+  showCaseNumber(0);
+  $('img').on('load', function() {
+    $(window).trigger('resize');
+  });
 
-    <script>
-      $(function() {
-        // Define default input to be used when developing this HIT.
-        var DEFAULT_INPUT = {
-          image: 'http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-0000.jpg',
-          phrase: 'outdoor roof'
-        };
+  // If the HIT is not in preview mode, then we need to enable the UI
+  // and set up the logic for submitting.
+  if (!simpleamt.isPreview()) {
+    enable_ui();
 
-        $(document).on('mousemove', function(ev) {
-          if (ev.pageY >= $('#filmstrip').offset().top &&
-              ev.pageY <= $('#filmstrip').offset().top +
-              $('#filmstrip').height() + 120) {
-            var percent = (ev.pageX - $('#filmstrip').offset().left -
-                $('#filmstrip').height() / 2) /
-              ($('#filmstrip').width() - $('#filmstrip').height());
-            // Set the progress bar to green.
-            // $('#checker .check').eq(Math.round(
-            //   $('#checker .check').length * percent)).animate({
-            //   opacity: 1}, 2000, function() { $(this).addClass('done'); });
-            var maxpos = $('#zoomin').width() - $('#clipper').width();
-            var pos = percent * maxpos;
-            pos = Math.max(0, Math.min(maxpos, pos));
-            $('#zoomin').prop('targetleft', -pos);
-          }
-        });
+    // You need to call this in every HIT; if you forget then you will
+    // get an error message when you try and submit the HIT.
+    simpleamt.setupSubmit();
 
-        var lastTime = (new Date).getTime();
-        function animate() {
-          var thisTime = (new Date).getTime();
-          var diffTime = (thisTime - lastTime) / 20;
-          var curr = parseFloat($('#zoomin').css('left'));
-          var diff = $('#zoomin').prop('targetleft') - curr;
-          if (Math.abs(diff) > 1) {
-             $('#zoomin').css('left', curr + Math.min(1, diffTime) * (diff < 0 ?
-                   -Math.sqrt(-diff) : Math.sqrt(diff)));
-          }
-          lastTime = thisTime;
-          requestAnimationFrame(animate);
-        };
-        animate();
+    // Set up a click handler for the submit button.
+    // Typically this will validate user output and either submit the
+    // HIT if the data is good or show an error message to the user if
+    // the data is bad. If this click handler returns false then the
+    // HIT will not be submitted.
+    // WARNING: If the click handler throws an exception
+    // then by default the HIT will be submitted; this is a fertile
+    // source of bugs.
+    $('#submit-btn').click(function() {
+      // Construct an object containing the output of this assignment.
+      var output = {
+        cases: case_data,
+        evaluations: evaluations
+      };
 
-        function main() {
-          // Read input to the HIT. In development the default input will be
-          // used, and in deployment actual input will be used.
-          var input = simpleamt.getInput(DEFAULT_INPUT);
-          var n = input.n || 16;
+      // Validate the output
+      if (evaluations.length < case_data.length ||
+          evaluations.indexOf(null) >= 0) {
+        alert('Some sets are still unfinished');
+        return false;
+      } else {
+        simpleamt.setOutput(output);
+      }
+    })
+  }
+}
 
-          $('#checker').text('');
-          for (var j = 0; j < n; ++j) {
-            $('#checker').append('<div class="check">');
-          }
-          $('#checker .check').css({width: (100 / n) + '%'})
+function enable_ui() {
+  // Enable the submit button. You must do this in every HIT.
+  $('#submit-btn').prop('disabled', false);
+}
 
-          // Use the input to set up the UI.
-          $('.example').attr('src', input.image);
-          $('#zoomin').css({left: 0}).prop('targetleft', 0);
-          var phrase = input.phrase.replace(/-[a-z]$/, '').replace(/-/g, ' ');
-          if (/ /.test(phrase)) {
-            $('.wordword').text('phrase');
-          } else {
-            $('.wordword').text('word');
-          }
+main();
 
-          $('#phrase').text(input.phrase);
-
-          // If the HIT is not in preview mode, then we need to enable the UI
-          // and set up the logic for submitting.
-          if (!simpleamt.isPreview()) {
-            enable_ui();
-
-            // You need to call this in every HIT; if you forget then you will
-            // get an error message when you try and submit the HIT.
-            simpleamt.setupSubmit();
-
-            // Set up a click handler for the submit button.
-            // Typically this will validate user output and either submit the
-            // HIT if the data is good or show an error message to the user if
-            // the data is bad. If this click handler returns false then the
-            // HIT will not be submitted.
-            // WARNING: If the click handler throws an exception
-            // then by default the HIT will be submitted; this is a fertile
-            // source of bugs.
-            $('#submit-btn').click(function() {
-              // Construct an object containing the output of this assignment.
-              var output = {
-                category: input.category,
-                example: $('#text-answer').val(),
-              };
-
-              // Validate the output
-              if (output.example.length < 3) {
-                alert('Your answer is not long enough');
-                return false;
-              } else {
-                simpleamt.setOutput(output);
-              }
-            })
-          }
-        }
-
-        function enable_ui() {
-          // Enable the UI specific to our HIT.
-          $('input[name=choice]').prop('disabled', false);
-
-          // Enable the submit button. You must do this in every HIT.
-          $('#submit-btn').prop('disabled', false);
-        }
-
-        main();
-
-      });
-    </script>
-  </body>
+});
+</script>
+<script>
+// Define default input to be used when developing this HIT.
+var DEFAULT_INPUT = {"cases": [
+{"phrase": "meshed", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0081.jpg", "unit": 82},
+{"phrase": "spiralled", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0007.jpg", "unit": 8},
+{"phrase": "street-s", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0087.jpg", "unit": 88},
+{"phrase": "book", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0154.jpg", "unit": 155},
+{"phrase": "sheep", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0179.jpg", "unit": 180},
+{"phrase": "shelf", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0110.jpg", "unit": 111},
+{"phrase": "field", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0180.jpg", "unit": 181},
+{"phrase": "swimming pool", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0095.jpg", "unit": 96},
+{"phrase": "crosswalk", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0034.jpg", "unit": 35},
+{"phrase": "dotted", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0167.jpg", "unit": 168},
+{"phrase": "car", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0001.jpg", "unit": 2},
+{"phrase": "flower", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0188.jpg", "unit": 189},
+{"phrase": "sidewalk", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0240.jpg", "unit": 241},
+{"phrase": "grooved", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0192.jpg", "unit": 193},
+{"phrase": "tree", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0207.jpg", "unit": 208},
+{"phrase": "person", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0099.jpg", "unit": 100},
+{"phrase": "ice_skating_rink-indoor-s", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0125.jpg", "unit": 126},
+{"phrase": "plant", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0157.jpg", "unit": 158},
+{"phrase": "light", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0054.jpg", "unit": 55},
+{"phrase": "car", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0073.jpg", "unit": 74},
+{"phrase": "ceiling", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0173.jpg", "unit": 174},
+{"phrase": "lined", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0016.jpg", "unit": 17},
+{"phrase": "water", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0015.jpg", "unit": 16},
+{"phrase": "mountain", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0187.jpg", "unit": 188},
+{"phrase": "track", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0090.jpg", "unit": 91},
+{"phrase": "red-c", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0040.jpg", "unit": 41},
+{"phrase": "back pillow", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0030.jpg", "unit": 31},
+{"phrase": "sea", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0071.jpg", "unit": 72},
+{"phrase": "road", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0135.jpg", "unit": 136},
+{"phrase": "food", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0183.jpg", "unit": 184},
+{"phrase": "street-s", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0126.jpg", "unit": 127},
+{"phrase": "sky", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0061.jpg", "unit": 62},
+{"phrase": "building", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0127.jpg", "unit": 128},
+{"phrase": "floor", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0162.jpg", "unit": 163},
+{"phrase": "honeycombed", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0107.jpg", "unit": 108},
+{"phrase": "zigzagged", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0249.jpg", "unit": 250},
+{"phrase": "tree", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0175.jpg", "unit": 176},
+{"phrase": "stairs", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0193.jpg", "unit": 194},
+{"phrase": "sprinkled", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0156.jpg", "unit": 157},
+{"phrase": "cobwebbed", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0069.jpg", "unit": 70},
+{"phrase": "corridor-s", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0023.jpg", "unit": 24},
+{"phrase": "grass", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0245.jpg", "unit": 246},
+{"phrase": "interlaced", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0197.jpg", "unit": 198},
+{"phrase": "body", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0195.jpg", "unit": 196},
+{"phrase": "windowpane", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0209.jpg", "unit": 210},
+{"phrase": "road", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0064.jpg", "unit": 65},
+{"phrase": "waterfall", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0033.jpg", "unit": 34},
+{"phrase": "work surface", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0037.jpg", "unit": 38},
+{"phrase": "swirly", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0177.jpg", "unit": 178},
+{"phrase": "floor", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0017.jpg", "unit": 18},
+{"phrase": "train", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0161.jpg", "unit": 162},
+{"phrase": "water", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0124.jpg", "unit": 125},
+{"phrase": "tree", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0174.jpg", "unit": 175},
+{"phrase": "art_gallery-s", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0066.jpg", "unit": 67},
+{"phrase": "cabinet", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0153.jpg", "unit": 154},
+{"phrase": "paisley", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0218.jpg", "unit": 219},
+{"phrase": "lacelike", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0211.jpg", "unit": 212},
+{"phrase": "head", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0002.jpg", "unit": 3},
+{"phrase": "banded", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0225.jpg", "unit": 226},
+{"phrase": "pitch", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0217.jpg", "unit": 218},
+{"phrase": "house", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0189.jpg", "unit": 190},
+{"phrase": "food", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0181.jpg", "unit": 182},
+{"phrase": "chair", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0084.jpg", "unit": 85},
+{"phrase": "tree", "image": "http://people.csail.mit.edu/davidbau/dissection/reference_places205/image/conv5-5-0227.jpg", "unit": 228}]};
+</script>
+</body>
 </html>
