@@ -29,8 +29,8 @@ cvpr = scrape.cvpr_data()
 for unit, row in enumerate(cvpr):
     cases.append({
         'method': 'cvpr',
-        'unit': (unit + 1),
-        'image': imgpat % unit,
+        'unit': row['unit'],
+        'image': imgpat % (row['unit'] - 1),
         'phrase': row['score'][0][1].lower()
         })
 
