@@ -43,6 +43,7 @@ for layer, s in layers:
             })
     start += s
 
+cases = []
 # TODO: add human data from import.py
 start = 0
 for i, (layer, s) in enumerate(layers):
@@ -62,7 +63,7 @@ for i, (layer, s) in enumerate(layers):
         })
     start += s
 
-assert(len(cases) == 3 * (96 + 256 + 384 + 384))
+assert(len(cases) == 1 * (96 + 256 + 384 + 384))
 
 # Complicated shuffling to avoid duplicate unit in the same HIT batch
 units = [[] for _ in range(start)]
@@ -72,7 +73,7 @@ for c in cases:
 for u in units:
     rng.shuffle(u)
 
-for b in range(0, 3):
+for b in range(0, 1):
     cases = [u[b] for u in units]
     rng.shuffle(cases)
     batch_count = (len(cases) + batch_size - 1) // batch_size
