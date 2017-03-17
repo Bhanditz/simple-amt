@@ -45,7 +45,7 @@ def read_listing_page(url):
 url = 'http://places.csail.mit.edu/deepscene/hybercolumn/plot_cvpr/precision_unit2label_places205_baseline.html'
 
 # New url - same data
-url = 'http://places.csail.mit.edu/deepscene/hybercolumn/plot_cvpr/precision_unit2label_places1_caffenet_unisegV4/conv5.html'
+url = 'http://places.csail.mit.edu/deepscene/hybercolumn/plot_cvpr/precision_unit2label_places1_caffenet_unisegV4/%s.html'
 
-def cvpr_data():
-    return read_listing_page(url)
+def cvpr_data(layer):
+    return read_listing_page(url % layer)
