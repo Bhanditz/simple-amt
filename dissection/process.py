@@ -2,7 +2,9 @@ import csv, sys, json, random
 from scipy.io import loadmat
 import scrape
 
-layers = [('conv1', 96), ('conv2', 256), ('conv3', 384), ('conv4', 384)]
+# layers = [('conv1', 96, 0), ('conv2', 256, 1), ('conv3', 384, 2),
+#           ('conv4', 384, 3)] 
+layers = [('conv5', 256, 4)]
 
 imgpat = ('http://people.csail.mit.edu/davidbau/dissection' +
   '/reference_places205/image/%s-5-%04d.jpg')
@@ -15,7 +17,7 @@ batch_size = 20
 
 cases = []
 start = 0
-for layer, s in layers:
+for layer, s, i in layers:
     with open(iccv_file % layer) as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -31,7 +33,7 @@ for layer, s in layers:
 
 # TODO: add CVPR data from scrape.py
 start = 0
-for layer, s in layers:
+for layer, s, i in layers:
     cvpr = scrape.cvpr_data(layer)
     for unit, row in enumerate(cvpr):
         cases.append({
@@ -46,7 +48,7 @@ for layer, s in layers:
 cases = []
 # TODO: add human data from import.py
 start = 0
-for i, (layer, s) in enumerate(layers):
+for layer, s, i in layers:
     human = loadmat('iclr/neuronAnnotation_places205_afterICLR.mat',
             squeeze_me=True)['layerAnnotation'][i,0]
     for unit, labels in enumerate(human):
@@ -63,7 +65,8 @@ for i, (layer, s) in enumerate(layers):
         })
     start += s
 
-assert(len(cases) == 1 * (96 + 256 + 384 + 384))
+# assert(len(cases) == 1 * (96 + 256 + 384 + 384))
+assert(len(cases) == 256)
 
 # Complicated shuffling to avoid duplicate unit in the same HIT batch
 units = [[] for _ in range(start)]
