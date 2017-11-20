@@ -1,0 +1,404 @@
+<html>
+<head>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">    
+<style>
+#mainwindow {
+  overflow: hidden;
+  position: relative;
+}
+#mainstrip {
+  white-space: nowrap;
+  position: relative;
+}
+#mainstrip .col-12 {
+  display: inline-block;
+}
+.case-grid img {
+  border: 1px solid transparent;
+  height: 144px;
+}
+.case-grid img:hover {
+  border: 1px solid purple;
+}
+
+#mainstrip .case-frame.container {
+  display: inline-block;
+}
+#mainstrip .case-grid {
+  display: inline-table;
+  vertical-align: top;
+}
+#mainstrip .case-form {
+  display: inline-block;
+  white-space: normal;
+  padding: 20px;
+  height: 500px;
+  width: 580px;
+}
+#thumbwindow {
+  margin-top: 2px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+}
+#thumbstrip {
+  white-space: nowrap;
+  position: relative;
+}
+#thumbstrip .thumbsquare {
+  display: inline-block;
+}
+#thumbstrip img {
+  border: 2px solid transparent;
+  height: 60px;
+}
+#thumbstrip img.yes {
+  border-color: lime;
+}
+#thumbstrip img.no {
+  border-color: red;
+}
+#submit-btn {
+  margin-top: 5px;
+}
+#yes.active {
+  background: lime;
+}
+#no.active {
+  background: red;
+}
+.case-grid td {
+    position: relative;
+}
+.case-grid td.cancelled::before {
+  content: '\2718';
+  color: red;
+  font-size: 90px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -37px;
+  margin-top: -48px;
+  text-align: center;
+  z-index: 1;
+  pointer-events: none;
+}
+.case-grid td.cancelled img {
+  opacity: 0.5;
+  z-index: -1;
+}
+.magnifier {
+  border: 3px solid gray;
+  border-radius: 8px;
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  position: relative;
+}
+.magnifier img {
+  width: 400;
+  height: 400;
+  position: absolute;
+}
+.template {
+  display: none;
+}
+.thumbox {
+  position: relative;
+}
+.thumbcenter {
+  display: inline-block;
+  width: 0; height: 100%;
+  position: absolute;
+}
+.thumbframe {
+	border-left: 2000px solid rgba(255,255,255,0.4);
+	border-right: 2000px solid rgba(255,255,255,0.4);
+	height: 100%;
+	width: 60px;
+	left: -2030px;
+	position: absolute;
+	z-index: 1;
+	box-sizing: content-box;
+  pointer-events: none;
+}
+.query {
+  text-align: center;
+}
+#phrase {
+  font-weight: bold;
+}
+</style>
+
+</head>
+<body>
+<div class='container'>
+<div id="mainwindow"><div id="mainstrip"></div></div>
+<div id="thumbwindow">
+  <div class="thumbcenter"><div class="thumbframe"></div></div>
+  <div id="thumbstrip"></div>
+</div>
+<div class="template">
+<center>
+<h3>Which of these are not like the others?</h3>
+</center>
+<p>
+Most of these pictures have something in common in the
+highlighted regions.
+<br>But some of them are not like the others.
+<p>1. Click to cross out <b>three or more</b> images that do not follow the pattern.<br>
+<b>(Not yet done.)</b>
+<p>2. Solve the puzzle by adding a few words to complete
+this sentence.
+<p><b>They show the same kind of</b>
+<select class="category">
+<option value="" data-p="noun and adjectives">pick one</option>
+<option value="object" data-p="specify the type of object">object</option>
+<option value="part" data-p="specify the part and object">part</option>
+<option value="scene" data-p="describe the kind of scene">scene</option>
+<option value="shape" data-p="describe shape and orientation">shape</option>
+<option value="texture" data-p="specify texture attributes">texture</option>
+<option value="material" data-p="describe the material">material</option>
+<option value="color" data-p="name the color and where it is">color</option>
+</select>
+<b>that is</b> <input type=text class="lab" placeholder="noun and adjectives" size=28>.</b>
+<p>
+<p>3. How confident are you in your solution?<br>
+<label><input type="radio" name="confidence">No confidence</label>
+<label><input type="radio" name="confidence">Slight confidence</label>
+<label><input type="radio" name="confidence">Moderate confidence</label>
+<label><input type="radio" name="confidence">High confidence</label>
+</p>
+
+<div style="text-align:right">
+<input type="button" class="prev btn btn-primary" value="&larr; Prev">
+<input type="button" class="next btn btn-primary" value="Next &rarr;">
+</div>
+<div>
+Magnifier:
+<div class="magnifier">
+<img>
+</div>
+</div>
+</div>
+</div>
+
+{% include "simpleamt.html" %}
+
+<script>
+var current_case_number = 0;
+var max_case_number = 1;
+var case_data = [];
+var evaluations = [];
+
+function showCaseNumber(casenumber) {
+  var pos = $('#case_' + casenumber).position();
+  $('#mainstrip').stop().animate({left: -pos.left});
+  var tpos = $('#thumb_' + casenumber).position();
+  $('#thumbstrip').stop().animate({left: ($('#thumbstrip').width() -
+        $('#thumb_' + casenumber).width()) / 2 - tpos.left}, clearActive);
+}
+
+function clearActive() {
+  $('.btn').removeClass('active');
+}
+
+function advance(direction) {
+  var orig = current_case_number;
+  current_case_number += direction;
+  current_case_number = Math.max(0, Math.min(
+        max_case_number - 1, current_case_number));
+  if (orig != current_case_number) {
+     showCaseNumber(current_case_number);
+  }
+}
+
+var resizeTimer = 0;
+$(window).on('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() { showCaseNumber(current_case_number); },
+      250);
+});
+
+$(document).on('click', '.next,.prev', function() {
+  clearActive();
+  $(this).addClass('active');
+  advance($(this).is('.prev') ? -1 : 1);
+});
+
+$(document).on('change', '.category', function() {
+  $(this).parent().find('.lab').attr('placeholder', $(this).find('[value=' + $(this).val() + ']').data('p'));
+})
+
+$(document).on('click', '#thumbstrip .thumbsquare', function() {
+  var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
+  if (which != current_case_number) {
+    current_case_number = which;
+    showCaseNumber(which);
+  }
+});
+
+$(document).on('click', '.case-grid td', function() {
+  $(this).toggleClass('cancelled');
+});
+$(document).on('mousedown', '.case-grid td', function() {
+  return false;
+});
+$(document).on('mousemove', '.case-grid img', function(e) {
+  var locx = (e.pageX - $(this).offset().left) / $(this).width();
+  var locy = (e.pageY - $(this).offset().top) / $(this).height();
+  var mag = $(this).closest('.case-frame').find('.magnifier');
+  var img = $(mag).find('img');
+  img.attr('src', $(this).attr('src')).css({
+     top:  Math.min(0, Math.max($(mag).height() - $(img).height(),
+           $(mag).height() / 2 - locy * $(img).height())),
+     left:  Math.min(0, Math.max($(mag).width() - $(img).width(),
+            $(mag).width() / 2 - locx * $(img).width()))
+  });
+});
+
+$(document).on('keydown', function(ev) {
+  if (ev.which == 37 || ev.which == 38 || ev.which == 8) {
+    $('#prev').trigger('click');
+  } else if (ev.which == 39 || ev.which == 40) {
+    $('#next').trigger('click');
+  } else if (ev.which == '1'.charCodeAt(0)) {
+    $('#yes').trigger('click');
+  } else if (ev.which == '2'.charCodeAt(0)) {
+    $('#no').trigger('click');
+  }
+});
+
+function donecount() {
+  var count = 0;
+  for (var j = 0; j < evaluations.length; ++j) {
+    if (evaluations[j] != null) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+$(function() {
+
+function main() {
+  // Grab focus.
+  $('#yes').focus();
+
+  // Read input to the HIT. In development the default input will be
+  // used, and in deployment actual input will be used.
+  var input = simpleamt.getInput(DEFAULT_INPUT);
+  case_data = input.cases;
+  var base_img = 'http://wednesday.csail.mit.edu/davidbau/relu5_img/conv5-';
+
+  var casecount = input.cases.length;
+  $('#totalcount').text(casecount);
+  for (var j = 0; j < casecount; ++j) {
+    var record = input.cases[j];
+    var content = record.content;
+    var div = $('<div class="case-frame container">').prop('id', 'case_' + j)
+        .appendTo('#mainstrip');
+    var table = $('<table class="case-grid">').appendTo(div)
+    var row, cell, img, thumb, imgurl;
+    for (var k = 0; k < content.length; ++k) {
+      var rec = content[k];
+      if (k % 4 == 0) {
+        row = $('<tr>').appendTo(table);
+      }
+      cell = $('<td>').appendTo(row);
+      imgurl = base_img + rec[4] + '-' + rec[5] + '-' + rec[3] + '.jpg';
+      img = $('<img>').prop('id', 'img_' + j + '-' + k).attr('src',
+          imgurl).appendTo(cell);
+      if (k == 0) {
+          // Use the first image as a thumbnail for the thumbstrip.
+          thumbdiv = $('<div class="thumbsquare" id="thumb_' + j + '">').
+              appendTo('#thumbstrip');
+          thumb = $('<img>').attr('src', imgurl).appendTo(thumbdiv);
+      }
+    }
+    var form = $('<form class="case-form">').appendTo(div);
+    $('.template').children().clone().appendTo(form);
+    // These forms do not submit.
+    $(form).on('submit', function() { return false; })
+  }
+  max_case_number = casecount;
+  showCaseNumber(0);
+  $('img').on('load', function() {
+    $(window).trigger('resize');
+  });
+
+  // If the HIT is not in preview mode, then we need to enable the UI
+  // and set up the logic for submitting.
+  if (!simpleamt.isPreview()) {
+    enable_ui();
+
+    // You need to call this in every HIT; if you forget then you will
+    // get an error message when you try and submit the HIT.
+    simpleamt.setupSubmit();
+
+    // Set up a click handler for the submit button.
+    // Typically this will validate user output and either submit the
+    // HIT if the data is good or show an error message to the user if
+    // the data is bad. If this click handler returns false then the
+    // HIT will not be submitted.
+    // WARNING: If the click handler throws an exception
+    // then by default the HIT will be submitted; this is a fertile
+    // source of bugs.
+    $('#submit-btn').click(function() {
+      // Construct an object containing the output of this assignment.
+      var output = {
+        cases: case_data,
+        evaluations: evaluations
+      };
+
+      // Validate the output
+      if (evaluations.length < case_data.length ||
+          evaluations.indexOf(null) >= 0) {
+        alert('Some sets are still unfinished');
+        return false;
+      } else {
+        simpleamt.setOutput(output);
+      }
+    })
+  }
+}
+
+function enable_ui() {
+  // Enable the submit button. You must do this in every HIT.
+  $('#submit-btn').prop('disabled', false);
+}
+
+main();
+
+});
+</script>
+<script>
+// Define default input to be used when developing this HIT.
+var DEFAULT_INPUT = {"cases":
+[{"mnemonic": "grid", "content": [[true, 193, 42, 76, 0, 37], [true, 193, 42, 42, 0, 37], [true, 193, 42, 56, 0, 37], [false, -1, -1, 29, 73, 210], [true, 193, 42, 97, 0, 37], [true, 193, 42, 43, 0, 37], [true, 193, 42, 21, 0, 37], [true, 193, 42, 74, 0, 37], [true, 193, 42, 5, 0, 37], [true, 193, 42, 65, 0, 37], [true, 193, 42, 53, 0, 37], [true, 193, 42, 87, 0, 37], [false, -1, -1, 12, 38, 29], [true, 193, 42, 10, 0, 37], [true, 193, 42, 71, 0, 37], [true, 193, 42, 6, 0, 37], [false, 130, 20, 43, 49, 89], [true, 193, 42, 3, 0, 37], [true, 193, 42, 26, 0, 37], [true, 193, 42, 86, 0, 37]], "experiment": "oneunit", "page_number": 661, "subject_id": 37, "phase_number": 0},
+{"mnemonic": "plant", "content": [[true, 333, 13, 54, 0, 75], [true, 333, 13, 23, 0, 75], [true, 333, 13, 7, 0, 75], [true, 333, 13, 97, 0, 75], [false, -1, -1, 40, 24, 35], [true, 333, 13, 61, 0, 75], [true, 333, 13, 53, 0, 75], [true, 333, 13, 56, 0, 75], [true, 333, 13, 96, 0, 75], [true, 333, 13, 34, 0, 75], [true, 333, 13, 40, 0, 75], [true, 333, 13, 16, 0, 75], [true, 333, 13, 83, 0, 75], [true, 333, 13, 66, 0, 75], [true, 333, 13, 5, 0, 75], [false, 27, 83, 26, 79, 93], [true, 333, 13, 94, 0, 75], [false, 111, 66, 69, 21, 190], [true, 333, 13, 36, 0, 75], [true, 333, 13, 78, 0, 75]], "experiment": "oneunit", "page_number": 699, "subject_id": 75, "phase_number": 0},
+{"mnemonic": "painted#2", "content": [[true, 250, 19, 84, 45, 203], [true, 250, 27, 56, 84, 16], [true, 250, 7, 80, 53, 137], [true, 250, 31, 22, 32, 128], [true, 250, 29, 84, 6, 249], [true, 250, 19, 21, 45, 203], [true, 250, 14, 26, 14, 61], [true, 250, 36, 49, 36, 19], [true, 250, 14, 40, 14, 61], [true, 250, 35, 0, 46, 155], [true, 250, 27, 35, 84, 16], [true, 250, 2, 96, 61, 117], [true, 250, 6, 76, 31, 69], [false, -1, -1, 4, 48, 226], [false, 148, 39, 56, 0, 51], [true, 250, 34, 65, 88, 53], [true, 250, 16, 88, 93, 122], [true, 250, 20, 5, 60, 208], [true, 250, 16, 47, 93, 122], [false, 178, 33, 5, 60, 56]], "experiment": "cluster", "page_number": 250, "subject_id": 250, "phase_number": 0},
+{"mnemonic": "sink", "content": [[true, 121, 54, 59, 0, 137], [true, 121, 54, 46, 0, 137], [false, 104, 40, 33, 0, 239], [true, 121, 54, 24, 0, 137], [true, 121, 54, 39, 0, 137], [true, 121, 54, 64, 0, 137], [true, 121, 54, 56, 0, 137], [true, 121, 54, 7, 0, 137], [true, 121, 54, 67, 0, 137], [true, 121, 54, 99, 0, 137], [true, 121, 54, 3, 0, 137], [true, 121, 54, 93, 0, 137], [true, 121, 54, 20, 0, 137], [true, 121, 54, 51, 0, 137], [true, 121, 54, 37, 0, 137], [true, 121, 54, 76, 0, 137], [true, 121, 54, 38, 0, 137], [false, 70, 23, 69, 52, 215], [true, 121, 54, 4, 0, 137], [false, -1, -1, 41, 10, 136]], "experiment": "oneunit", "page_number": 761, "subject_id": 137, "phase_number": 0},
+{"mnemonic": "cabinet", "content": [[true, -1, -1, 12, 78, 250], [true, -1, -1, 92, 78, 250], [true, -1, -1, 59, 78, 250], [true, -1, -1, 77, 78, 250], [true, -1, -1, 17, 78, 250], [false, -1, -1, 78, 25, 151], [true, -1, -1, 58, 78, 250], [true, -1, -1, 41, 78, 250], [true, -1, -1, 88, 78, 250], [true, -1, -1, 18, 78, 250], [false, 206, 22, 74, 89, 114], [true, -1, -1, 73, 78, 250], [false, 77, 0, 78, 49, 211], [true, -1, -1, 26, 78, 250], [true, -1, -1, 93, 78, 250], [true, -1, -1, 35, 78, 250], [true, -1, -1, 10, 78, 250], [true, -1, -1, 69, 78, 250], [true, -1, -1, 23, 78, 250], [true, -1, -1, 50, 78, 250]], "experiment": "anyunit", "page_number": 522, "subject_id": 20218, "phase_number": 0},
+{"mnemonic": "drawer", "content": [[true, -1, -1, 25, 81, 82], [true, -1, -1, 50, 81, 82], [false, -1, -1, 6, 99, 214], [true, -1, -1, 16, 81, 82], [true, -1, -1, 72, 81, 82], [true, -1, -1, 52, 81, 82], [true, -1, -1, 85, 81, 82], [true, -1, -1, 68, 81, 82], [false, -1, -1, 93, 67, 18], [true, -1, -1, 57, 81, 82], [true, -1, -1, 81, 81, 82], [true, -1, -1, 91, 81, 82], [false, 272, 6, 6, 83, 226], [true, -1, -1, 6, 81, 82], [true, -1, -1, 88, 81, 82], [true, -1, -1, 37, 81, 82], [true, -1, -1, 92, 81, 82], [true, -1, -1, 33, 81, 82], [true, -1, -1, 48, 81, 82], [true, -1, -1, 8, 81, 82]], "experiment": "anyunit", "page_number": 619, "subject_id": 20818, "phase_number": 0},
+{"mnemonic": "zigzagged", "content": [[true, 248, 18, 22, 0, 142], [true, 248, 18, 44, 0, 142], [true, 248, 18, 67, 0, 142], [true, 248, 18, 73, 0, 142], [false, 138, 13, 2, 95, 141], [true, 248, 18, 76, 0, 142], [true, 248, 18, 96, 0, 142], [false, 3, 45, 90, 40, 90], [true, 248, 18, 80, 0, 142], [true, 248, 18, 15, 0, 142], [true, 248, 18, 98, 0, 142], [true, 248, 18, 62, 0, 142], [true, 248, 18, 35, 0, 142], [true, 248, 18, 41, 0, 142], [true, 248, 18, 46, 0, 142], [true, 248, 18, 87, 0, 142], [true, 248, 18, 79, 0, 142], [true, 248, 18, 39, 0, 142], [true, 248, 18, 68, 0, 142], [false, 154, 13, 15, 99, 151]], "experiment": "oneunit", "page_number": 766, "subject_id": 142, "phase_number": 0},
+{"mnemonic": "lamp", "content": [[true, 12, 3, 28, 61, 14], [true, 12, 37, 34, 62, 147], [true, 12, 30, 48, 88, 16], [true, 12, 78, 48, 16, 181], [true, 12, 48, 85, 55, 124], [true, 12, 85, 18, 47, 236], [true, 12, 81, 57, 42, 20], [true, 12, 29, 31, 17, 181], [true, 12, 88, 54, 5, 237], [true, 12, 82, 14, 29, 131], [true, 12, 66, 48, 66, 39], [false, 172, 35, 40, 19, 1], [false, 20, 28, 44, 0, 186], [true, 12, 13, 99, 33, 76], [false, 321, 13, 94, 56, 87], [true, 12, 3, 51, 61, 14], [true, 12, 63, 72, 53, 249], [true, 12, 94, 26, 37, 231], [true, 12, 50, 18, 94, 143], [true, 12, 39, 65, 18, 206]], "experiment": "cluster", "page_number": 12, "subject_id": 12, "phase_number": 0},
+{"mnemonic": "lighthouse-s", "content": [[true, 180, 40, 79, 0, 106], [true, 180, 40, 85, 0, 106], [true, 180, 40, 74, 0, 106], [true, 180, 40, 96, 0, 106], [true, 180, 40, 34, 0, 106], [true, 180, 40, 94, 0, 106], [true, 180, 40, 24, 0, 106], [true, 180, 40, 65, 0, 106], [true, 180, 40, 4, 0, 106], [true, 180, 40, 73, 0, 106], [false, 53, 77, 52, 87, 10], [true, 180, 40, 10, 0, 106], [false, 66, 35, 96, 44, 154], [true, 180, 40, 41, 0, 106], [true, 180, 40, 5, 0, 106], [false, -1, -1, 12, 24, 199], [true, 180, 40, 98, 0, 106], [true, 180, 40, 19, 0, 106], [true, 180, 40, 76, 0, 106], [true, 180, 40, 92, 0, 106]], "experiment": "oneunit", "page_number": 730, "subject_id": 106, "phase_number": 0},
+{"mnemonic": "dog", "content": [[true, 179, 15, 74, 0, 191], [true, 179, 15, 46, 0, 191], [true, 179, 15, 43, 0, 191], [true, 179, 15, 71, 0, 191], [false, 36, 29, 35, 55, 136], [true, 179, 15, 91, 0, 191], [false, 290, 6, 61, 69, 233], [true, 179, 15, 6, 0, 191], [true, 179, 15, 56, 0, 191], [true, 179, 15, 89, 0, 191], [true, 179, 15, 92, 0, 191], [true, 179, 15, 82, 0, 191], [false, 79, 62, 9, 45, 223], [true, 179, 15, 96, 0, 191], [true, 179, 15, 88, 0, 191], [true, 179, 15, 69, 0, 191], [true, 179, 15, 21, 0, 191], [true, 179, 15, 64, 0, 191], [true, 179, 15, 54, 0, 191], [true, 179, 15, 30, 0, 191]], "experiment": "oneunit", "page_number": 815, "subject_id": 191, "phase_number": 0},
+{"mnemonic": "striped#2", "content": [[true, 300, 31, 74, 60, 30], [true, 300, 22, 7, 6, 113], [true, 300, 12, 28, 64, 145], [true, 300, 1, 43, 93, 243], [true, 300, 19, 90, 34, 240], [true, 300, 7, 77, 96, 212], [true, 300, 27, 35, 5, 212], [true, 300, 19, 80, 34, 240], [true, 300, 24, 75, 37, 218], [true, 300, 16, 73, 73, 77], [false, 169, 15, 2, 72, 245], [true, 300, 11, 56, 76, 47], [false, -1, -1, 11, 94, 56], [true, 300, 20, 84, 24, 45], [true, 300, 16, 96, 73, 77], [true, 300, 0, 19, 79, 255], [true, 300, 27, 21, 5, 212], [true, 300, 22, 83, 6, 113], [true, 300, 3, 17, 43, 129], [false, -1, -1, 11, 53, 214]], "experiment": "cluster", "page_number": 300, "subject_id": 300, "phase_number": 0},
+{"mnemonic": "chequered", "content": [[true, 275, 27, 80, 0, 238], [true, 275, 27, 96, 0, 238], [false, 371, 0, 53, 41, 177], [true, 275, 27, 24, 0, 238], [true, 275, 27, 93, 0, 238], [true, 275, 27, 81, 0, 238], [true, 275, 27, 60, 0, 238], [true, 275, 27, 92, 0, 238], [true, 275, 27, 77, 0, 238], [false, 38, 1, 60, 27, 169], [true, 275, 27, 75, 0, 238], [true, 275, 27, 54, 0, 238], [false, 157, 56, 91, 51, 137], [true, 275, 27, 84, 0, 238], [true, 275, 27, 13, 0, 238], [true, 275, 27, 74, 0, 238], [true, 275, 27, 95, 0, 238], [true, 275, 27, 8, 0, 238], [true, 275, 27, 31, 0, 238], [true, 275, 27, 10, 0, 238]], "experiment": "oneunit", "page_number": 862, "subject_id": 238, "phase_number": 0},
+{"mnemonic": "grid", "content": [[true, 30, 47, 64, 0, 34], [true, 30, 47, 2, 0, 34], [true, 30, 47, 85, 0, 34], [true, 30, 47, 49, 0, 34], [false, 67, 26, 33, 76, 44], [false, 230, 45, 19, 58, 243], [true, 30, 47, 18, 0, 34], [true, 30, 47, 88, 0, 34], [true, 30, 47, 12, 0, 34], [true, 30, 47, 6, 0, 34], [false, 173, 16, 10, 21, 139], [true, 30, 47, 74, 0, 34], [true, 30, 47, 62, 0, 34], [true, 30, 47, 20, 0, 34], [true, 30, 47, 90, 0, 34], [true, 30, 47, 39, 0, 34], [true, 30, 47, 45, 0, 34], [true, 30, 47, 67, 0, 34], [true, 30, 47, 94, 0, 34], [true, 30, 47, 31, 0, 34]], "experiment": "oneunit", "page_number": 658, "subject_id": 34, "phase_number": 0},
+{"mnemonic": "road/painted", "content": [[true, 73, 63, 4, 84, 173], [false, 171, 38, 93, 84, 241], [true, 73, 20, 4, 48, 53], [false, -1, -1, 27, 77, 98], [true, 73, 28, 75, 55, 26], [true, 73, 37, 80, 41, 170], [true, 73, 69, 45, 46, 74], [true, 73, 68, 11, 9, 202], [true, 73, 54, 31, 54, 49], [true, 73, 61, 82, 94, 148], [true, 73, 40, 68, 45, 156], [true, 73, 10, 80, 99, 35], [true, 73, 49, 35, 85, 215], [true, 73, 56, 97, 71, 208], [true, 73, 26, 99, 1, 242], [true, 73, 71, 53, 81, 90], [true, 73, 16, 75, 40, 57], [false, 124, 8, 15, 30, 145], [true, 73, 49, 4, 85, 215], [true, 73, 49, 98, 85, 215]], "experiment": "cluster", "page_number": 73, "subject_id": 73, "phase_number": 0},
+{"mnemonic": "black-c#4", "content": [[false, -1, -1, 35, 1, 110], [true, 287, 13, 44, 68, 5], [true, 287, 7, 86, 85, 231], [true, 287, 29, 44, 58, 163], [true, 287, 3, 99, 79, 210], [true, 287, 2, 48, 15, 229], [true, 287, 21, 42, 90, 169], [false, 118, 62, 17, 0, 23], [true, 287, 24, 66, 43, 250], [true, 287, 33, 54, 0, 189], [true, 287, 35, 24, 76, 10], [true, 287, 27, 70, 49, 27], [true, 287, 9, 42, 50, 179], [true, 287, 15, 43, 86, 136], [true, 287, 13, 58, 68, 5], [true, 287, 17, 75, 54, 10], [false, -1, -1, 0, 98, 217], [true, 287, 22, 28, 37, 171], [true, 287, 10, 45, 60, 213], [true, 287, 1, 0, 10, 88]], "experiment": "cluster", "page_number": 287, "subject_id": 287, "phase_number": 0},
+{"mnemonic": "building", "content": [[true, 253, 8, 3, 0, 215], [false, 33, 26, 76, 35, 144], [true, 253, 8, 93, 0, 215], [true, 253, 8, 75, 0, 215], [true, 253, 8, 6, 0, 215], [true, 253, 8, 51, 0, 215], [true, 253, 8, 36, 0, 215], [true, 253, 8, 21, 0, 215], [true, 253, 8, 19, 0, 215], [true, 253, 8, 33, 0, 215], [true, 253, 8, 88, 0, 215], [true, 253, 8, 58, 0, 215], [false, 187, 23, 70, 82, 198], [true, 253, 8, 89, 0, 215], [true, 253, 8, 99, 0, 215], [true, 253, 8, 69, 0, 215], [false, 189, 36, 83, 42, 126], [true, 253, 8, 23, 0, 215], [true, 253, 8, 12, 0, 215], [true, 253, 8, 74, 0, 215]], "experiment": "oneunit", "page_number": 839, "subject_id": 215, "phase_number": 0},
+{"mnemonic": "cemetery-s", "content": [[true, 284, 29, 69, 78, 65], [true, 284, 29, 94, 78, 65], [true, 284, 29, 81, 78, 65], [false, 150, 23, 17, 46, 29], [true, 284, 29, 41, 78, 65], [true, 284, 29, 42, 78, 65], [true, 284, 29, 45, 78, 65], [true, 284, 29, 60, 78, 65], [true, 284, 29, 85, 78, 65], [true, 284, 29, 59, 78, 65], [true, 284, 29, 74, 78, 65], [false, 40, 1, 85, 91, 223], [true, 284, 29, 37, 78, 65], [true, 284, 29, 0, 78, 65], [false, 98, 75, 22, 65, 20], [true, 284, 29, 14, 78, 65], [true, 284, 29, 27, 78, 65], [true, 284, 29, 58, 78, 65], [true, 284, 29, 13, 78, 65], [true, 284, 29, 10, 78, 65]], "experiment": "anyunit", "page_number": 438, "subject_id": 20033, "phase_number": 0},
+{"mnemonic": "freckled", "content": [[true, 303, 25, 60, 0, 55], [true, 303, 25, 22, 0, 55], [false, 135, 55, 72, 90, 1], [true, 303, 25, 48, 0, 55], [true, 303, 25, 95, 0, 55], [true, 303, 25, 26, 0, 55], [false, -1, -1, 4, 17, 102], [true, 303, 25, 5, 0, 55], [true, 303, 25, 33, 0, 55], [true, 303, 25, 93, 0, 55], [true, 303, 25, 58, 0, 55], [true, 303, 25, 36, 0, 55], [true, 303, 25, 64, 0, 55], [true, 303, 25, 94, 0, 55], [true, 303, 25, 78, 0, 55], [true, 303, 25, 6, 0, 55], [false, 292, 33, 99, 65, 235], [true, 303, 25, 59, 0, 55], [true, 303, 25, 43, 0, 55], [true, 303, 25, 66, 0, 55]], "experiment": "oneunit", "page_number": 679, "subject_id": 55, "phase_number": 0},
+{"mnemonic": "bus", "content": [[true, 258, 14, 50, 71, 247], [true, 258, 14, 11, 71, 247], [true, 258, 14, 88, 71, 247], [true, 258, 14, 30, 71, 247], [false, 131, 36, 64, 18, 197], [true, 258, 14, 10, 71, 247], [false, 8, 67, 11, 76, 98], [true, 258, 14, 45, 71, 247], [true, 258, 14, 99, 71, 247], [true, 258, 14, 80, 71, 247], [true, 258, 14, 6, 71, 247], [true, 258, 14, 62, 71, 247], [true, 258, 14, 64, 71, 247], [true, 258, 14, 24, 71, 247], [false, 95, 51, 92, 60, 162], [true, 258, 14, 38, 71, 247], [true, 258, 14, 34, 71, 247], [true, 258, 14, 44, 71, 247], [true, 258, 14, 14, 71, 247], [true, 258, 14, 17, 71, 247]], "experiment": "anyunit", "page_number": 372, "subject_id": 18423, "phase_number": 0},
+{"mnemonic": "grid/bow_window-outdoor-s#2", "content": [[true, 363, 1, 76, 18, 191], [true, 363, 11, 27, 20, 28], [true, 363, 6, 78, 9, 145], [true, 363, 11, 67, 20, 28], [false, 29, 39, 46, 71, 133], [true, 363, 10, 85, 67, 254], [true, 363, 3, 98, 71, 69], [true, 363, 11, 32, 20, 28], [true, 363, 10, 84, 67, 254], [true, 363, 8, 3, 34, 217], [true, 363, 0, 97, 50, 172], [true, 363, 0, 29, 50, 172], [true, 363, 10, 30, 67, 254], [true, 363, 2, 81, 36, 191], [false, -1, -1, 1, 80, 71], [true, 363, 0, 58, 50, 172], [true, 363, 10, 1, 67, 254], [true, 363, 9, 1, 45, 250], [true, 363, 8, 86, 34, 217], [false, 112, 59, 6, 26, 235]], "experiment": "cluster", "page_number": 363, "subject_id": 363, "phase_number": 0}
+]};
+</script>
+</body>
+</html>
