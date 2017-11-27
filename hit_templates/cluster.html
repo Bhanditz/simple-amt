@@ -7,6 +7,13 @@
 #mainwindow {
   overflow: hidden;
   position: relative;
+  height: 100px;
+}
+#mainscroller {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  padding-bottom: 150px;
+  top: 0; left: 0;
 }
 #mainstrip {
   white-space: nowrap;
@@ -15,14 +22,8 @@
 #mainstrip .col-12 {
   display: inline-block;
 }
-.case-grid td {
-  height: 144px;
-  width: 144px;
-}
 .case-grid img {
   border: 1px solid white;
-  height: 144px;
-  width: 144px;
   position: absolute;
   top: 0;
   left: 0;
@@ -30,29 +31,121 @@
   transition: top .2s, left .2s, width .2s, height .2s, z-index .2s;
 }
 .case-grid img:hover {
-  top: -42px;
-  left: -42px;
-  width: 227px;
-  height: 227px;
-  z-index: 2;
-  transition: top .2s ease .9s, left .2s ease .9s,
-               width .2s ease .9s, height .2s ease .9s,
-               z-index .2s step-end;
+    z-index: 2;
+    transition: top .2s ease .9s, left .2s ease .9s,
+                 width .2s ease .9s, height .2s ease .9s,
+                 z-index .2s step-end;
 }
 .case-grid tr:first-of-type img:hover {
   top: 0px;
 }
-.case-grid tr:last-of-type img:hover {
-  top: -84px;
-}
 .case-grid td:first-of-type img:hover {
   left: 0px;
 }
-.case-grid td:last-of-type img:hover {
-  left: -84px;
+
+/* window width 720 */
+@media(max-width:991px){
+  #mainwindow {
+    height: 460px;
+  }
+  #mainwindow .case-frame {
+    width: 820px;
+  }
+  #mainwindow .case-form {
+    height: 460px;
+    width: 352px;
+  }
+  .case-grid td {
+    height: 92px;
+    width: 92px;
+  }
+  .case-grid img {
+    height: 92px;
+    width: 92px;
+  }
+  .case-grid img:hover {
+    top: -68px;
+    left: -68px;
+    width: 229px;
+    height: 229px;
+  }
+  .case-grid tr:last-of-type img:hover {
+    top: -137px;
+  }
+  .case-grid td:last-of-type img:hover {
+    left: -137px;
+  }
+}
+/* window width 940 */
+@media(min-width:992px){
+  #mainwindow {
+    height: 600px;
+  }
+  #mainwindow .case-frame {
+    width: 1040px;
+  }
+  #mainwindow .case-form {
+    height: 600px;
+    width: 460px;
+  }
+  .case-grid td {
+    height: 120px;
+    width: 120px;
+  }
+  .case-grid img {
+    height: 120px;
+    width: 120px;
+  }
+  .case-grid img:hover {
+    top: -52px;
+    left: -52px;
+    width: 229px;
+    height: 229px;
+  }
+  .case-grid tr:last-of-type img:hover {
+    top: -105px;
+  }
+  .case-grid td:last-of-type img:hover {
+    left: -105px;
+  }
 }
 
-#mainstrip .case-frame.container {
+/* width 1140 */
+@media(min-width:1200px){
+  #mainwindow {
+    height: 720px;
+  }
+  #mainwindow .case-frame {
+    width: 1300px;
+  }
+  #mainwindow .case-form {
+    height: 720px;
+    width: 564px;
+  }
+  .case-grid td {
+    height: 144px;
+    width: 144px;
+  }
+  .case-grid img {
+    border: 1px solid white;
+    height: 144px;
+    width: 144px;
+  }
+  .case-grid img:hover {
+    top: -42px;
+    left: -42px;
+    width: 229px;
+    height: 229px;
+  }
+  .case-grid tr:last-of-type img:hover {
+    top: -85px;
+  }
+  .case-grid td:last-of-type img:hover {
+    left: -85px;
+  }
+}
+
+#mainstrip .case-frame {
   display: inline-block;
   vertical-align: top;
 }
@@ -63,20 +156,30 @@
 #mainstrip .case-form {
   display: inline-block;
   white-space: normal;
-  padding: 20px;
-  height: 500px;
-  width: 580px;
+  padding-left: 20px;
 }
 #thumbwindow {
   margin-top: 2px;
   margin-bottom: 5px;
+  height: 67px;
   overflow: hidden;
   position: relative;
   text-align: center;
 }
+#thumbscroller {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  padding-bottom: 150px;
+}
 #thumbstrip {
   white-space: nowrap;
   position: relative;
+}
+#thumbstrip::before, #thumbstrip::after {
+  display: inline-block;
+  height: 1px;
+  width: 1000px;
+  content: '';
 }
 #thumbstrip .thumbsquare {
   display: inline-block;
@@ -102,6 +205,9 @@
 }
 .case-grid td {
   position: relative;
+}
+.case-grid td.cancelled {
+  overflow: hidden;
 }
 .case-grid td.cancelled::before {
   content: '\2718';
@@ -133,8 +239,8 @@
   position: absolute;
 }
 .thumbframe {
-	border-left: 2000px solid rgba(255,255,255,0.4);
-	border-right: 2000px solid rgba(255,255,255,0.4);
+	border-left: 2000px solid rgba(255,255,255,0.6);
+	border-right: 2000px solid rgba(255,255,255,0.6);
 	height: 100%;
 	width: 60px;
 	left: -2030px;
@@ -154,10 +260,10 @@
 </head>
 <body>
 <div class='container'>
-<div id="mainwindow"><div id="mainstrip"></div></div>
+<div id="mainwindow"><div id="mainscroller"><div id="mainstrip"></div></div></div>
 <div id="thumbwindow">
   <div class="thumbcenter"><div class="thumbframe"></div></div>
-  <div id="thumbstrip"></div>
+  <div id="thumbscroller"><div id="thumbstrip"></div></div>
 </div>
 
 
@@ -166,13 +272,10 @@
 <h3>Which of these are not like the others?</h3>
 </center>
 <p>
-Most of these pictures have something in common in the
-highlighted regions.
-<br>But some of them are not like the others.
-<p>1. Click to cross out <b>three or more</b> images that do not follow the pattern.<br>
-<b>(Not yet done.)</b>
-<p>2. Solve the puzzle by adding a few words to complete
-this sentence.
+Most of these pictures have something in common in
+highlighted areas, but some are not like the others.
+<p>1. Click to cross out <b>3 or more</b> that do not belong.
+<p>2. Explain the puzzle by completing this sentence.
 <p><b>They show the same kind of</b>
 <select class="category">
 <option value="" data-p="noun and adjectives">pick one</option>
@@ -183,17 +286,17 @@ this sentence.
 <option value="texture" data-p="specify texture attributes">texture</option>
 <option value="material" data-p="describe the material">material</option>
 <option value="color" data-p="name the color and where it is">color</option>
-</select>
+</select><br>
 <b>that is</b> <input type=text class="lab" placeholder="noun and adjectives" size=28>.</b>
 <p>
 <p>3. How confident are you in your solution?<br>
-<label><input type="radio" name="confidence">No confidence</label>
-<label><input type="radio" name="confidence">Slight confidence</label>
-<label><input type="radio" name="confidence">Moderate confidence</label>
-<label><input type="radio" name="confidence">High confidence</label>
+<label><input type="radio" name="confidence"> No confidence</label><br>
+<label><input type="radio" name="confidence"> Slight confidence</label><br>
+<label><input type="radio" name="confidence"> Moderate confidence</label><br>
+<label><input type="radio" name="confidence"> High confidence</label>
 </p>
 
-<div style="text-align:right">
+<div>
 <input type="button" class="prev btn btn-primary" value="&larr; Prev">
 <input type="button" class="next btn btn-primary" value="Next &rarr;">
 </div>
@@ -216,12 +319,20 @@ var max_case_number = 1;
 var case_data = [];
 var evaluations = [];
 
-function showCaseNumber(casenumber) {
+function showCaseNumber(casenumber, jump) {
   var pos = $('#case_' + casenumber).position();
-  $('#mainstrip').stop().animate({left: -pos.left});
   var tpos = $('#thumb_' + casenumber).position();
-  $('#thumbstrip').stop().animate({left: ($('#thumbstrip').width() -
-        $('#thumb_' + casenumber).width()) / 2 - tpos.left}, clearActive);
+  if (jump) {
+    $('#mainscroller').stop().scrollLeft(pos.left);
+    $('#thumbscroller').stop().scrollLeft(tpos.left -
+          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2);
+    clearActive();
+  } else {
+    $('#mainscroller').stop().animate({scrollLeft: pos.left});
+    $('#thumbscroller').stop().animate({scrollLeft: tpos.left -
+          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2},
+          clearActive);
+  }
 }
 
 function clearActive() {
@@ -245,6 +356,13 @@ $(window).on('resize', function() {
       250);
 });
 
+$(document).on('focus', '.case-frame *', function() {
+  var which = parseInt(
+      $(this).closest('.case-frame').prop('id').replace(/case_/, ''));
+  console.log('got focus event to', which);
+  showCaseNumber(which, true);
+});
+
 $(document).on('click', '.next,.prev', function() {
   clearActive();
   $(this).addClass('active');
@@ -252,7 +370,7 @@ $(document).on('click', '.next,.prev', function() {
 });
 
 $(document).on('change', '.category', function() {
-  $(this).parent().find('.lab').attr('placeholder', $(this).find('[value=' + $(this).val() + ']').data('p'));
+  $(this).parent().find('.lab').attr('placeholder', $(this).find('[value="' + $(this).val() + '"]').data('p'));
 })
 
 $(document).on('click', '#thumbstrip .thumbsquare', function() {
@@ -308,7 +426,7 @@ function main() {
   for (var j = 0; j < casecount; ++j) {
     var record = input.cases[j];
     var content = record.content;
-    var div = $('<div class="case-frame container">').prop('id', 'case_' + j)
+    var div = $('<div class="case-frame">').prop('id', 'case_' + j)
         .appendTo('#mainstrip');
     var table = $('<table class="case-grid">').appendTo(div)
     var row, cell, img, thumb, imgurl;
@@ -319,7 +437,7 @@ function main() {
       }
       cell = $('<td>').appendTo(row);
       imgurl = base_img + rec[4] + '-' + rec[5] + '-' + rec[3] + '.jpg';
-      img = $('<img>').prop('id', 'img_' + j + '-' + k).attr('src',
+      img = $('<img tabindex=0>').prop('id', 'img_' + j + '-' + k).attr('src',
           imgurl).appendTo(cell);
       if (k == 0) {
           // Use the first image as a thumbnail for the thumbstrip.
