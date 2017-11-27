@@ -15,16 +15,46 @@
 #mainstrip .col-12 {
   display: inline-block;
 }
-.case-grid img {
-  border: 1px solid transparent;
+.case-grid td {
   height: 144px;
+  width: 144px;
+}
+.case-grid img {
+  border: 1px solid white;
+  height: 144px;
+  width: 144px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  transition: top .2s, left .2s, width .2s, height .2s, z-index .2s;
 }
 .case-grid img:hover {
-  border: 1px solid purple;
+  top: -42px;
+  left: -42px;
+  width: 227px;
+  height: 227px;
+  z-index: 2;
+  transition: top .2s ease .9s, left .2s ease .9s,
+               width .2s ease .9s, height .2s ease .9s,
+               z-index .2s step-end;
+}
+.case-grid tr:first-of-type img:hover {
+  top: 0px;
+}
+.case-grid tr:last-of-type img:hover {
+  top: -84px;
+}
+.case-grid td:first-of-type img:hover {
+  left: 0px;
+}
+.case-grid td:last-of-type img:hover {
+  left: -84px;
 }
 
 #mainstrip .case-frame.container {
   display: inline-block;
+  vertical-align: top;
 }
 #mainstrip .case-grid {
   display: inline-table;
@@ -71,7 +101,7 @@
   background: red;
 }
 .case-grid td {
-    position: relative;
+  position: relative;
 }
 .case-grid td.cancelled::before {
   content: '\2718';
@@ -89,19 +119,7 @@
 .case-grid td.cancelled img {
   opacity: 0.5;
   z-index: -1;
-}
-.magnifier {
-  border: 3px solid gray;
-  border-radius: 8px;
-  width: 150px;
-  height: 150px;
-  overflow: hidden;
-  position: relative;
-}
-.magnifier img {
-  width: 400;
-  height: 400;
-  position: absolute;
+  transition: none;
 }
 .template {
   display: none;
@@ -141,7 +159,9 @@
   <div class="thumbcenter"><div class="thumbframe"></div></div>
   <div id="thumbstrip"></div>
 </div>
-<div class="template">
+
+
+<div class="template page">
 <center>
 <h3>Which of these are not like the others?</h3>
 </center>
@@ -178,12 +198,14 @@ this sentence.
 <input type="button" class="next btn btn-primary" value="Next &rarr;">
 </div>
 <div>
-Magnifier:
-<div class="magnifier">
-<img>
 </div>
 </div>
 </div>
+
+<div class="template finish">
+<center>
+This page summarizes things at the end.
+</center>
 </div>
 
 {% include "simpleamt.html" %}
@@ -247,19 +269,6 @@ $(document).on('click', '.case-grid td', function() {
 $(document).on('mousedown', '.case-grid td', function() {
   return false;
 });
-$(document).on('mousemove', '.case-grid img', function(e) {
-  var locx = (e.pageX - $(this).offset().left) / $(this).width();
-  var locy = (e.pageY - $(this).offset().top) / $(this).height();
-  var mag = $(this).closest('.case-frame').find('.magnifier');
-  var img = $(mag).find('img');
-  img.attr('src', $(this).attr('src')).css({
-     top:  Math.min(0, Math.max($(mag).height() - $(img).height(),
-           $(mag).height() / 2 - locy * $(img).height())),
-     left:  Math.min(0, Math.max($(mag).width() - $(img).width(),
-            $(mag).width() / 2 - locx * $(img).width()))
-  });
-});
-
 $(document).on('keydown', function(ev) {
   if (ev.which == 37 || ev.which == 38 || ev.which == 8) {
     $('#prev').trigger('click');
@@ -320,7 +329,7 @@ function main() {
       }
     }
     var form = $('<form class="case-form">').appendTo(div);
-    $('.template').children().clone().appendTo(form);
+    $('.template.page').children().clone().appendTo(form);
     // These forms do not submit.
     $(form).on('submit', function() { return false; })
   }
@@ -338,6 +347,17 @@ function main() {
     // You need to call this in every HIT; if you forget then you will
     // get an error message when you try and submit the HIT.
     simpleamt.setupSubmit();
+
+    var lastpage = $('<div class="case-frame container">').prop('id',
+        "case_" + casecount).appendTo('#mainstrip');
+    $('.template.finish').children().clone().appendTo(lastpage);
+    $('#results-form').appendTo(lastpage)
+    // Use the first image as a thumbnail for the thumbstrip.
+    thumbdiv = $('<div class="thumbsquare" id="thumb_' + casecount + '">').
+        appendTo('#thumbstrip');
+    thumb = $('<img>').attr('src', 'https://i.imgur.com/RgPAv0A.png').
+        appendTo(thumbdiv);
+    max_case_number = casecount + 1;
 
     // Set up a click handler for the submit button.
     // Typically this will validate user output and either submit the
