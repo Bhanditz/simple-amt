@@ -30,16 +30,31 @@
   z-index: 0;
   transition: top .2s, left .2s, width .2s, height .2s, z-index .2s;
 }
-.case-grid img:hover {
-    z-index: 2;
-    transition: top .2s ease .9s, left .2s ease .9s,
+.btn.prev, .btn.next {
+  margin-bottom: 5px;
+}
+
+.keying .case-grid img:focus {
+  border: 3px dotted lightblue;
+  border-radius: 10px;
+  z-index: 1;
+}
+
+.mousing .case-grid td:not(.cancelled) img:hover,
+.keying .case-grid td:not(.cancelled) img.zoom {
+  z-index: 3;
+  transition: top .2s ease .9s, left .2s ease .9s,
                  width .2s ease .9s, height .2s ease .9s,
                  z-index .2s step-end;
+  width: 229px;
+  height: 229px;
 }
-.case-grid tr:first-of-type img:hover {
+.mousing .case-grid tr:first-of-type td:not(.cancelled) img:hover,
+.keying .case-grid tr:first-of-type td:not(.cancelled) img.zoom {
   top: 0px;
 }
-.case-grid td:first-of-type img:hover {
+.mousing .case-grid td:first-of-type:not(.cancelled) img:hover,
+.keying .case-grid td:first-of-type:not(.cancelled) img.zoom {
   left: 0px;
 }
 
@@ -63,16 +78,17 @@
     height: 92px;
     width: 92px;
   }
-  .case-grid img:hover {
+  .mousing .case-grid td:not(.cancelled) img:hover,
+  .keying .case-grid td:not(.cancelled) img.zoom {
     top: -68px;
     left: -68px;
-    width: 229px;
-    height: 229px;
   }
-  .case-grid tr:last-of-type img:hover {
+	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -137px;
   }
-  .case-grid td:last-of-type img:hover {
+	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -137px;
   }
 }
@@ -96,16 +112,17 @@
     height: 120px;
     width: 120px;
   }
-  .case-grid img:hover {
+  .mousing .case-grid td:not(.cancelled) img:hover,
+  .keying .case-grid td:not(.cancelled) img.zoom {
     top: -52px;
     left: -52px;
-    width: 229px;
-    height: 229px;
   }
-  .case-grid tr:last-of-type img:hover {
+	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -105px;
   }
-  .case-grid td:last-of-type img:hover {
+	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -105px;
   }
 }
@@ -131,16 +148,17 @@
     height: 144px;
     width: 144px;
   }
-  .case-grid img:hover {
+  .mousing .case-grid td:not(.cancelled) img:hover,
+  .keying .case-grid td:not(.cancelled) img.zoom {
     top: -42px;
     left: -42px;
-    width: 229px;
-    height: 229px;
   }
-  .case-grid tr:last-of-type img:hover {
+	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -85px;
   }
-  .case-grid td:last-of-type img:hover {
+	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -85px;
   }
 }
@@ -216,10 +234,10 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  margin-left: -37px;
-  margin-top: -48px;
+  margin-left: -30px;
+  margin-top: -55px;
   text-align: center;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
 }
 .case-grid td.cancelled img {
@@ -258,7 +276,7 @@
 </style>
 
 </head>
-<body>
+<body class="mousing">
 <div class='container'>
 <div id="mainwindow"><div id="mainscroller"><div id="mainstrip"></div></div></div>
 <div id="thumbwindow">
@@ -269,7 +287,7 @@
 
 <div class="template page">
 <center>
-<h3>Which of these are not like the others?</h3>
+<h3>Which of these are not like the others? <span class="number"></span></h3>
 </center>
 <p>
 Most of these pictures have something in common in
@@ -290,15 +308,20 @@ highlighted areas, but some are not like the others.
 <b>that is</b> <input type=text class="lab" placeholder="noun and adjectives" size=28>.</b>
 <p>
 <p>3. How confident are you in your solution?<br>
-<label><input type="radio" name="confidence"> No confidence</label><br>
-<label><input type="radio" name="confidence"> Slight confidence</label><br>
-<label><input type="radio" name="confidence"> Moderate confidence</label><br>
-<label><input type="radio" name="confidence"> High confidence</label>
+<label><input type="radio" accesskey="N" name="confidence">
+ No confidence</label><br>
+<label><input type="radio" accesskey="S" name="confidence">
+ Slight confidence</label><br>
+<label><input type="radio" accesskey="M" name="confidence">
+ Moderate confidence</label><br>
+<label><input type="radio" accesskey="H" name="confidence">
+ High confidence</label>
 </p>
 
 <div>
-<input type="button" class="prev btn btn-primary" value="&larr; Prev">
-<input type="button" class="next btn btn-primary" value="Next &rarr;">
+<input type="button" class="prev btn btn-primary" tabindex=-1
+  value="&larr; Prev (pageup)">
+<input type="button" class="next btn btn-primary" value="Next (pagedn) &rarr;">
 </div>
 <div>
 </div>
@@ -319,7 +342,7 @@ var max_case_number = 1;
 var case_data = [];
 var evaluations = [];
 
-function showCaseNumber(casenumber, jump) {
+function showPageNumber(casenumber, jump) {
   var pos = $('#case_' + casenumber).position();
   var tpos = $('#thumb_' + casenumber).position();
   if (jump) {
@@ -330,74 +353,208 @@ function showCaseNumber(casenumber, jump) {
   } else {
     $('#mainscroller').stop().animate({scrollLeft: pos.left});
     $('#thumbscroller').stop().animate({scrollLeft: tpos.left -
-          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2},
-          clearActive);
+          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2});
+    clearActive();
   }
+}
+
+function setDefaultPageFocus() {
+  var curpage = $('#case_' + current_case_number);
+  var last = false;
+  if (document.activeElement) {
+    if (curpage.find(document.activeElement).length) {
+      return; // Nothing to do: focus is already on the page.
+    }
+    // Select the last focusable if the current active is after the page.
+    last = (curpage.add(document.activeElement).index(
+        document.activeElement) > 0);
+  }
+  curpage.find(FOCUSABLE).eq(last ? -1 : 0).focus();
 }
 
 function clearActive() {
   $('.btn').removeClass('active');
 }
 
-function advance(direction) {
+function advancePage(direction) {
   var orig = current_case_number;
   current_case_number += direction;
   current_case_number = Math.max(0, Math.min(
         max_case_number - 1, current_case_number));
   if (orig != current_case_number) {
-     showCaseNumber(current_case_number);
+     showPageNumber(current_case_number);
   }
 }
 
 var resizeTimer = 0;
 $(window).on('resize', function() {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(function() { showCaseNumber(current_case_number); },
+  resizeTimer = setTimeout(function() { showPageNumber(current_case_number); },
       250);
 });
 
 $(document).on('focus', '.case-frame *', function() {
   var which = parseInt(
       $(this).closest('.case-frame').prop('id').replace(/case_/, ''));
-  console.log('got focus event to', which);
-  showCaseNumber(which, true);
+  current_case_number = which;
+  showPageNumber(which);
 });
 
 $(document).on('click', '.next,.prev', function() {
   clearActive();
   $(this).addClass('active');
-  advance($(this).is('.prev') ? -1 : 1);
+  advancePage($(this).is('.prev') ? -1 : 1);
 });
 
 $(document).on('change', '.category', function() {
-  $(this).parent().find('.lab').attr('placeholder', $(this).find('[value="' + $(this).val() + '"]').data('p'));
+  var label_input = $(this).parent().find('.lab');
+  label_input.attr('placeholder',
+     $(this).find('[value="' + $(this).val() + '"]').data('p'));
+  label_input.focus();
 })
 
 $(document).on('click', '#thumbstrip .thumbsquare', function() {
   var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
   if (which != current_case_number) {
     current_case_number = which;
-    showCaseNumber(which);
+    showPageNumber(which);
   }
 });
 
 $(document).on('click', '.case-grid td', function() {
   $(this).toggleClass('cancelled');
 });
+
 $(document).on('mousedown', '.case-grid td', function() {
+  $(this).find('img').focus();
   return false;
 });
-$(document).on('keydown', function(ev) {
-  if (ev.which == 37 || ev.which == 38 || ev.which == 8) {
-    $('#prev').trigger('click');
-  } else if (ev.which == 39 || ev.which == 40) {
-    $('#next').trigger('click');
-  } else if (ev.which == '1'.charCodeAt(0)) {
-    $('#yes').trigger('click');
-  } else if (ev.which == '2'.charCodeAt(0)) {
-    $('#no').trigger('click');
+
+// Manage "mousing" and "keying" style at body element.
+$('body').get(0).addEventListener('mousemove', function() {
+  if (!$('body').hasClass('mousing')) {
+    $('body').removeClass('keying').addClass('mousing');
   }
+}, true);
+$('body').get(0).addEventListener('keydown', function() {
+  if (!$('body').hasClass('keying')) {
+    $('body').removeClass('mousing').addClass('keying');
+  }
+}, true);
+
+var LEFT = 37, RIGHT = 39, UP = 38, DOWN = 40, PAGEUP = 33, PAGEDOWN = 34,
+    BACKSPACE = 9, TAB = 9, ENTER = 13;
+
+// Special case for arrow/tab focus handling the image grid.
+$(document).on('keydown', '.case-grid img', function(ev) {
+  if (ev.which == LEFT || (ev.which == TAB && ev.shiftKey)) {
+    focusNextElement(-1)
+  } else if (ev.which == RIGHT || (ev.which == TAB && !ev.shiftKey)) {
+    focusNextElement(1)
+  } else if (ev.which == DOWN) {
+    var col = $(this).closest('td').index();
+    var below = $(this).closest('tr').next().children().eq(col).find('img');
+    if (below.length) {
+      below.focus();
+    }
+    else {
+      focusNextElement();
+    }
+  } else if (ev.which == UP) {
+    var col = $(this).closest('td').index();
+    var above = $(this).closest('tr').prev().children().eq(col).find('img');
+    if (above.length) {
+      above.focus();
+    }
+    else {
+      focusNextElement(-1);
+    }
+  } else if (ev.which == 'X'.charCodeAt(0) || ev.which == ' '.charCodeAt(0)) {
+    $(this).trigger('click');
+  } else if (ev.which == ENTER) {
+    // Focus the last image, then go to the next one.
+    $(this).closest('.case-grid').find('img').eq(-1).focus();
+    focusNextElement(1);
+  } else {
+    return;
+  }
+  return false;
 });
+
+// Handle navigation keys on elements that do not internally handle them.
+$(document).on('keydown', function(ev) {
+  if (ev.which == PAGEUP) {
+    advancePage(-1);
+  } else if (ev.which == PAGEDOWN) {
+    advancePage(1);
+  } else if ((!document.activeElement ||
+        document.activeElement == document.body) &&
+    (ev.which == RIGHT || ev.which == LEFT || ev.which == UP ||
+     ev.which == DOWN || ev.which == TAB)) {
+    console.log('got arrow to nowhere');
+    setDefaultPageFocus();
+  } else if ($(document.activeElement).is("input[type=button]," +
+        "input[type=submit],button,select,input[type=radio]") &&
+    (ev.which == RIGHT || ev.which == LEFT)) {
+    focusNextElement(ev.which == LEFT ? -1 : 1);
+  } else if ($(document.activeElement).is(
+        "input[type=button],input[type=text],input[type=submit],button") &&
+    (ev.which == UP || ev.which == DOWN)) {
+    focusNextElement(ev.which == UP ? -1 : 1);
+  } else if ($(document.activeElement).is(
+        "input[type=text],input[type=radio],select") &&
+    (ev.which == ENTER)) {
+    focusNextElement(1);
+  } else {
+    return;
+  }
+  return false;
+})
+
+$(document).on('blur', '.case-grid img', function() {
+  $(this).removeClass('zoom');
+});
+$(document).on('focus', '.case-grid img', function() {
+  $('.zoom').not(this).removeClass('zoom');
+  $(this).toggleClass('zoom');
+});
+
+var FOCUSABLE = 'a:not([disabled]), button:not([disabled]), ' +
+      'input:not([disabled]), select:not([disabled]), ' +
+      '[tabindex]:not([disabled]):not([tabindex="-1"])';
+
+// From https://stackoverflow.com/questions/7208161
+// However, modified to cross between forms rather than staying within forms
+function focusNextElement(advanceBy) {
+  // add all elements we want to include in our selection
+  if (document.activeElement) {
+    // Get a list of all visible, focusable elements (plus active one)
+    var focusable = Array.prototype.filter.call(
+        document.querySelectorAll(FOCUSABLE),
+        function (element) {
+          if (document.activeElement.type == 'radio') {
+            if (element !== document.activeElement &&
+                element.type == 'radio' &&
+                element.form == document.activeElement.form &&
+                element.name == document.activeElement.name) {
+              return false; // Omit same-group radio buttons from order.
+            }
+          }
+          return element.offsetWidth > 0 || element.offsetHeight > 0 ||
+              element === document.activeElement;
+        });
+    var index = focusable.indexOf(document.activeElement);
+    if (index > -1) {
+      if (typeof advanceBy == "undefined") { advanceBy = 1; }
+      var newindex = index + advanceBy;
+      // Do not wrap around.
+      if (newindex >= 0 && newindex < focusable.length) {
+        focusable[newindex].focus();
+      }
+    }
+  }
+}
+
 
 function donecount() {
   var count = 0;
@@ -448,11 +605,12 @@ function main() {
     }
     var form = $('<form class="case-form">').appendTo(div);
     $('.template.page').children().clone().appendTo(form);
+    form.find('.number').text('(' + (j+1) + '/' + casecount + ')');
     // These forms do not submit.
     $(form).on('submit', function() { return false; })
   }
   max_case_number = casecount;
-  showCaseNumber(0);
+  showPageNumber(0);
   $('img').on('load', function() {
     $(window).trigger('resize');
   });
