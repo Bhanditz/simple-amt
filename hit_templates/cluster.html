@@ -4,6 +4,10 @@
 <script src='https://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js'></script>
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">    
 <style>
+td {
+  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size: 14px;
+}
 #mainwindow {
   overflow: hidden;
   position: relative;
@@ -21,6 +25,10 @@
 }
 #mainstrip .col-12 {
   display: inline-block;
+}
+.regular-text {
+  white-space: normal;
+  max-width: 600px;
 }
 .case-grid img {
   border: 1px solid white;
@@ -285,6 +293,34 @@
 </div>
 
 
+<div class="template instructions">
+<div class="regular-text">
+<h3>Which of these are not like the others?</h3>
+<p>This is a set of 20 puzzles, each with 20 highlighted pictures.
+<p>Do each puzzle in three steps:
+<ol>
+<li>Click the pictures that do not belong.
+<li>Describe the pattern by adding a few words to a sentence.
+<li>Rate your confidence in your solution.
+</ol>
+<p>Cross out any pictures that do not belong before you write
+the sentence.  You can go back and adjust your work at any time.
+Submit the HIT after all 20 puzzles are done.
+<p>Keyboard shortcuts:
+<p>
+<table class="table-condensed" style="border:1px solid black">
+<tr><td>Pagedown/pageup</td> <td>Next/previous puzzle</td></tr>
+<tr><td>Tab/arrow</td> <td>Move between images and inputs</td></tr>
+<tr><td>X or space</td> <td>Cross out the selected image</td></tr>
+<tr><td>Enter</td> <td>Finish the current input</td></tr>
+<tr><td>Shift-tab</td> <td>Go back to the input</td></tr>
+</tr>
+</table>
+</div>
+<p>
+<input type="button" class="next btn btn-primary" value="Begin (pagedn) &rarr;">
+</div>
+
 <div class="template page">
 <center>
 <h3>Which of these are not like the others? <span class="number"></span></h3>
@@ -294,7 +330,7 @@ Most of these pictures have something in common in
 highlighted areas, but some are not like the others.
 <p>1. Click to cross out <b>3 or more</b> that do not belong.
 <p>2. Explain the puzzle by completing this sentence.
-<p><b>They show the same kind of</b>
+<p><b>They are the same kind of</b>
 <select class="category">
 <option value="" data-p="noun and adjectives">pick one</option>
 <option value="object" data-p="specify the type of object">object</option>
@@ -337,7 +373,7 @@ This page summarizes things at the end.
 {% include "simpleamt.html" %}
 
 <script>
-var current_case_number = 0;
+var current_case_number = -1;
 var max_case_number = 1;
 var case_data = [];
 var evaluations = [];
@@ -379,7 +415,7 @@ function clearActive() {
 function advancePage(direction) {
   var orig = current_case_number;
   current_case_number += direction;
-  current_case_number = Math.max(0, Math.min(
+  current_case_number = Math.max(-1, Math.min(
         max_case_number - 1, current_case_number));
   if (orig != current_case_number) {
      showPageNumber(current_case_number);
@@ -519,8 +555,10 @@ $(document).on('focus', '.case-grid img', function() {
   $(this).toggleClass('zoom');
 });
 
-var FOCUSABLE = 'a:not([disabled]), button:not([disabled]), ' +
-      'input:not([disabled]), select:not([disabled]), ' +
+var FOCUSABLE = 'a:not([disabled]):not([tabindex="-1"]),' +
+      'button:not([disabled]):not([tabindex="-1"]),' +
+      'input:not([disabled]):not([tabindex="-1"]),' +
+      'select:not([disabled]):not([tabindex="-1"]), ' +
       '[tabindex]:not([disabled]):not([tabindex="-1"])';
 
 // From https://stackoverflow.com/questions/7208161
@@ -578,6 +616,15 @@ function main() {
   case_data = input.cases;
   var base_img = 'http://wednesday.csail.mit.edu/davidbau/relu5_img/conv5-';
 
+  var firstpage = $('<div class="case-frame">').prop('id',
+      "case_-1").appendTo('#mainstrip');
+  $('.template.instructions').children().clone().appendTo(firstpage);
+  var thumbdiv = $('<div class="thumbsquare" id="thumb_-1">').
+        appendTo('#thumbstrip');
+  // question mark: https://i.imgur.com/OfqDPKC.png
+  // starting flag: https://i.imgur.com/TnwTvHX.png
+  var thumb = $('<img>').attr('src', 'https://i.imgur.com/TnwTvHX.png').
+        appendTo(thumbdiv);
   var casecount = input.cases.length;
   $('#totalcount').text(casecount);
   for (var j = 0; j < casecount; ++j) {
@@ -610,7 +657,7 @@ function main() {
     $(form).on('submit', function() { return false; })
   }
   max_case_number = casecount;
-  showPageNumber(0);
+  showPageNumber(-1);
   $('img').on('load', function() {
     $(window).trigger('resize');
   });
