@@ -48,7 +48,7 @@ td {
   z-index: 1;
 }
 
-.mousing .case-grid td:not(.cancelled) img:hover,
+body:not(.keying) .case-grid td:not(.cancelled) img:hover,
 .keying .case-grid td:not(.cancelled) img.zoom {
   z-index: 3;
   transition: top .2s ease .9s, left .2s ease .9s,
@@ -57,11 +57,11 @@ td {
   width: 229px;
   height: 229px;
 }
-.mousing .case-grid tr:first-of-type td:not(.cancelled) img:hover,
+body:not(.keying) .case-grid tr:first-of-type td:not(.cancelled) img:hover,
 .keying .case-grid tr:first-of-type td:not(.cancelled) img.zoom {
   top: 0px;
 }
-.mousing .case-grid td:first-of-type:not(.cancelled) img:hover,
+body:not(.keying) .case-grid td:first-of-type:not(.cancelled) img:hover,
 .keying .case-grid td:first-of-type:not(.cancelled) img.zoom {
   left: 0px;
 }
@@ -86,16 +86,16 @@ td {
     height: 92px;
     width: 92px;
   }
-  .mousing .case-grid td:not(.cancelled) img:hover,
+  body:not(.keying) .case-grid td:not(.cancelled) img:hover,
   .keying .case-grid td:not(.cancelled) img.zoom {
     top: -68px;
     left: -68px;
   }
-	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid tr:last-of-type td:not(.cancelled) img:hover,
 	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -137px;
   }
-	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid td:last-of-type:not(.cancelled) img:hover,
 	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -137px;
   }
@@ -120,16 +120,16 @@ td {
     height: 120px;
     width: 120px;
   }
-  .mousing .case-grid td:not(.cancelled) img:hover,
+  body:not(.keying) .case-grid td:not(.cancelled) img:hover,
   .keying .case-grid td:not(.cancelled) img.zoom {
     top: -52px;
     left: -52px;
   }
-	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid tr:last-of-type td:not(.cancelled) img:hover,
 	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -105px;
   }
-	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid td:last-of-type:not(.cancelled) img:hover,
 	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -105px;
   }
@@ -156,16 +156,16 @@ td {
     height: 144px;
     width: 144px;
   }
-  .mousing .case-grid td:not(.cancelled) img:hover,
+  body:not(.keying) .case-grid td:not(.cancelled) img:hover,
   .keying .case-grid td:not(.cancelled) img.zoom {
     top: -42px;
     left: -42px;
   }
-	.mousing .case-grid tr:last-of-type td:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid tr:last-of-type td:not(.cancelled) img:hover,
 	.keying .case-grid tr:last-of-type td:not(.cancelled) img.zoom {
     top: -85px;
   }
-	.mousing .case-grid td:last-of-type:not(.cancelled) img:hover,
+	body:not(.keying) .case-grid td:last-of-type:not(.cancelled) img:hover,
 	.keying .case-grid td:last-of-type:not(.cancelled) img.zoom {
     left: -85px;
   }
@@ -284,7 +284,7 @@ td {
 </style>
 
 </head>
-<body class="mousing">
+<body>
 <div class='container'>
 <div id="mainwindow"><div id="mainscroller"><div id="mainstrip"></div></div></div>
 <div id="thumbwindow">
@@ -466,15 +466,15 @@ $(document).on('mousedown', '.case-grid td', function() {
   return false;
 });
 
-// Manage "mousing" and "keying" style at body element.
+// Manage "keying" style at body element.
 $('body').get(0).addEventListener('mousemove', function() {
-  if (!$('body').hasClass('mousing')) {
-    $('body').removeClass('keying').addClass('mousing');
+  if ($('body').hasClass('keying')) {
+    $('body').removeClass('keying');
   }
 }, true);
 $('body').get(0).addEventListener('keydown', function() {
   if (!$('body').hasClass('keying')) {
-    $('body').removeClass('mousing').addClass('keying');
+    $('body').addClass('keying');
   }
 }, true);
 
