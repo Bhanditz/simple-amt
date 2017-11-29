@@ -389,7 +389,8 @@ function showPageNumber(casenumber, jump) {
   } else {
     $('#mainscroller').stop().animate({scrollLeft: pos.left});
     $('#thumbscroller').stop().animate({scrollLeft: tpos.left -
-          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2});
+          ($('#thumbwindow').width() - $('#thumb_' + casenumber).width()) / 2},
+        setDefaultPageFocus);
     clearActive();
   }
 }
@@ -493,17 +494,11 @@ $(document).on('keydown', '.case-grid img', function(ev) {
     if (below.length) {
       below.focus();
     }
-    else {
-      focusNextElement();
-    }
   } else if (ev.which == UP) {
     var col = $(this).closest('td').index();
     var above = $(this).closest('tr').prev().children().eq(col).find('img');
     if (above.length) {
       above.focus();
-    }
-    else {
-      focusNextElement(-1);
     }
   } else if (ev.which == 'X'.charCodeAt(0) || ev.which == ' '.charCodeAt(0)) {
     $(this).trigger('click');
@@ -527,12 +522,20 @@ $(document).on('keydown', function(ev) {
         document.activeElement == document.body) &&
     (ev.which == RIGHT || ev.which == LEFT || ev.which == UP ||
      ev.which == DOWN || ev.which == TAB)) {
-    console.log('got arrow to nowhere');
     setDefaultPageFocus();
   } else if ($(document.activeElement).is("input[type=button]," +
         "input[type=submit],button,select,input[type=radio]") &&
     (ev.which == RIGHT || ev.which == LEFT)) {
     focusNextElement(ev.which == LEFT ? -1 : 1);
+  } else if ($(document.activeElement).is("input[type=text]") &&
+    (ev.which == RIGHT) && (document.activeElement.value.length ==
+     document.activeElement.selectionStart) &&
+    (!ev.shiftKey && !ev.ctrlKey)) {
+    focusNextElement(1);
+  } else if ($(document.activeElement).is("input[type=text]") &&
+    (ev.which == LEFT) && (0 == document.activeElement.selectionEnd) &&
+    (!ev.shiftKey && !ev.ctrlKey)) {
+    focusNextElement(-1);
   } else if ($(document.activeElement).is(
         "input[type=button],input[type=text],input[type=submit],button") &&
     (ev.which == UP || ev.which == DOWN)) {
