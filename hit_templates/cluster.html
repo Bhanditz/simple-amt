@@ -171,6 +171,28 @@ body:not(.keying) .case-grid td:first-of-type:not(.cancelled) img:hover,
   }
 }
 
+/* Validation ui */
+.case-frame.q1-done .q1 p:first-of-type::after,
+.case-frame.q2-done .q2 p:first-of-type::after,
+.case-frame.q3-done .q3 p:first-of-type::after {
+  content: '\2714';
+  color: green;
+}
+.case-frame:not(.q1-done) .q2 {
+   visibility: hidden;
+}
+.case-frame:not(.q1-done) .q3,
+.case-frame:not(.q2-done) .q3 {
+   visibility: hidden;
+}
+
+.case-frame:not(.q1-done) .q4,
+.case-frame:not(.q2-done) .q4,
+.case-frame:not(.q3-done) .q4 {
+   border: silver;
+   background: silver;
+}
+
 #mainstrip .case-frame {
   display: inline-block;
   vertical-align: top;
@@ -209,16 +231,25 @@ body:not(.keying) .case-grid td:first-of-type:not(.cancelled) img:hover,
 }
 #thumbstrip .thumbsquare {
   display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+.thumbsquare.finished::before {
+  content: '\2714';
+  color: green;
+  font-size: 50px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-left: -20px;
+  margin-top: -35px;
+  text-align: center;
+  z-index: 1;
+  pointer-events: none;
 }
 #thumbstrip img {
   border: 2px solid transparent;
   height: 60px;
-}
-#thumbstrip img.yes {
-  border-color: lime;
-}
-#thumbstrip img.no {
-  border-color: red;
 }
 #submit-btn {
   margin-top: 5px;
@@ -271,7 +302,7 @@ body:not(.keying) .case-grid td:first-of-type:not(.cancelled) img:hover,
 	width: 60px;
 	left: -2030px;
 	position: absolute;
-	z-index: 1;
+	z-index: 2;
 	box-sizing: content-box;
   pointer-events: none;
 }
@@ -328,7 +359,10 @@ Submit the HIT after all 20 puzzles are done.
 <p>
 Most of these pictures have something in common in
 highlighted areas, but some are not like the others.
+<div class="q1">
 <p>1. Click to cross out <b>3 or more</b> that do not belong.
+</div>
+<div class="q2">
 <p>2. Explain the puzzle by completing this sentence.
 <p><b>They are the same kind of</b>
 <select class="category">
@@ -336,29 +370,31 @@ highlighted areas, but some are not like the others.
 <option value="object" data-p="specify the type of object">object</option>
 <option value="part" data-p="specify the part and object">part</option>
 <option value="scene" data-p="describe the kind of scene">scene</option>
+<option value="location" data-p="say where and relative to what">location</option>
 <option value="shape" data-p="describe shape and orientation">shape</option>
 <option value="texture" data-p="specify texture attributes">texture</option>
 <option value="material" data-p="describe the material">material</option>
 <option value="color" data-p="name the color and where it is">color</option>
 </select><br>
 <b>that is</b> <input type=text class="lab" placeholder="noun and adjectives" size=28>.</b>
+</div>
+<div class="q3">
+<p>3. How confident are you in your solution?
 <p>
-<p>3. How confident are you in your solution?<br>
-<label><input type="radio" accesskey="N" name="confidence">
+<label><input type="radio" accesskey="N" value="1" name="confidence">
  No confidence</label><br>
-<label><input type="radio" accesskey="S" name="confidence">
+<label><input type="radio" accesskey="S" value="2" name="confidence">
  Slight confidence</label><br>
-<label><input type="radio" accesskey="M" name="confidence">
+<label><input type="radio" accesskey="M" value="3" name="confidence">
  Moderate confidence</label><br>
-<label><input type="radio" accesskey="H" name="confidence">
+<label><input type="radio" accesskey="H" value="4" name="confidence">
  High confidence</label>
-</p>
+</div>
 
 <div>
 <input type="button" class="prev btn btn-primary" tabindex=-1
   value="&larr; Prev (pageup)">
-<input type="button" class="next btn btn-primary" value="Next (pagedn) &rarr;">
-</div>
+<input type="button" class="next btn btn-primary q4" value="Next (pagedn) &rarr;">
 <div>
 </div>
 </div>
@@ -373,7 +409,7 @@ This page summarizes things at the end.
 {% include "simpleamt.html" %}
 
 <script>
-var current_case_number = -1;
+var current_case_number = 0;
 var max_case_number = 1;
 var case_data = [];
 var evaluations = [];
@@ -450,6 +486,22 @@ $(document).on('change', '.category', function() {
   label_input.focus();
 })
 
+$(document).on('input change', function(e) {
+  // Validate input
+  var page = $(e.target).closest('.case-frame');
+  var casenum = page.prop('id').replace(/case_/,'');
+  page.toggleClass('q1-done', page.find('td.cancelled').length >= 3);
+  page.toggleClass('q2-done',
+      !!page.find('.category').val() &&
+      page.find('.lab').val().length >= 3);
+  // Question 3
+  page.toggleClass('q3-done',
+      !!page.find('input[name="confidence"]:checked').val())
+  // Put a checkmark on the thumbnail.
+  $('#thumb_' + casenum).toggleClass('finished',
+      page.hasClass('q1-done q2-done q3-done'));
+});
+
 $(document).on('click', '#thumbstrip .thumbsquare', function() {
   var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
   if (which != current_case_number) {
@@ -460,6 +512,7 @@ $(document).on('click', '#thumbstrip .thumbsquare', function() {
 
 $(document).on('click', '.case-grid td', function() {
   $(this).toggleClass('cancelled');
+  $(this).trigger('input');
 });
 
 $(document).on('mousedown', '.case-grid td', function() {
@@ -500,7 +553,8 @@ $(document).on('keydown', '.case-grid img', function(ev) {
     if (above.length) {
       above.focus();
     }
-  } else if (ev.which == 'X'.charCodeAt(0) || ev.which == ' '.charCodeAt(0)) {
+  } else if (ev.which == 'X'.charCodeAt(0) || ev.which == ' '.charCodeAt(0) ||
+      ev.which == '.'.charCodeAt(0)) {
     $(this).trigger('click');
   } else if (ev.which == ENTER) {
     // Focus the last image, then go to the next one.
@@ -566,6 +620,14 @@ var FOCUSABLE = 'a:not([disabled]):not([tabindex="-1"]),' +
 
 // From https://stackoverflow.com/questions/7208161
 // However, modified to cross between forms rather than staying within forms
+function hasInvisibleParent(elem) {
+  while (elem) {
+    if (getComputedStyle(elem).visibility == 'hidden') { return true; }
+    elem = elem.parentElement;
+  }
+  return false;
+}
+
 function focusNextElement(advanceBy) {
   // add all elements we want to include in our selection
   if (document.activeElement) {
@@ -581,7 +643,8 @@ function focusNextElement(advanceBy) {
               return false; // Omit same-group radio buttons from order.
             }
           }
-          return element.offsetWidth > 0 || element.offsetHeight > 0 ||
+          return (element.offsetWidth > 0 && element.offsetHeight > 0 &&
+              !hasInvisibleParent(element)) ||
               element === document.activeElement;
         });
     var index = focusable.indexOf(document.activeElement);
@@ -626,7 +689,8 @@ function main() {
         appendTo('#thumbstrip');
   // question mark: https://i.imgur.com/OfqDPKC.png
   // starting flag: https://i.imgur.com/TnwTvHX.png
-  var thumb = $('<img>').attr('src', 'https://i.imgur.com/TnwTvHX.png').
+  var thumb = $('<img>').attr('src',
+        'https://i.imgur.com/OfqDPKC.png').
         appendTo(thumbdiv);
   var casecount = input.cases.length;
   $('#totalcount').text(casecount);
@@ -655,12 +719,15 @@ function main() {
     }
     var form = $('<form class="case-form">').appendTo(div);
     $('.template.page').children().clone().appendTo(form);
+    if (j == 0) {
+      form.find('.prev').val('\u2190 Instructions (pageup)');
+    }
     form.find('.number').text('(' + (j+1) + '/' + casecount + ')');
     // These forms do not submit.
     $(form).on('submit', function() { return false; })
   }
   max_case_number = casecount;
-  showPageNumber(-1);
+  showPageNumber(current_case_number);
   $('img').on('load', function() {
     $(window).trigger('resize');
   });
