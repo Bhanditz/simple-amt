@@ -26,9 +26,12 @@ td {
 #mainstrip .col-12 {
   display: inline-block;
 }
-.regular-text {
+.regular-text, .summary {
   white-space: normal;
   max-width: 600px;
+}
+.summary u {
+  cursor: pointer;
 }
 .case-grid img {
   border: 1px solid white;
@@ -401,9 +404,14 @@ highlighted areas, but some are not like the others.
 </div>
 
 <div class="template finish">
+<div class="summary">
 <center>
-This page summarizes things at the end.
+<h3>Check and Submit</h3>
 </center>
+<p><span class="allnumbers">No</span> puzzles finished.
+<div class="todo">Submit using this page after
+<a href="#case_0">the puzzles</a> are done.</div>
+</div>
 </div>
 
 {% include "simpleamt.html" %}
@@ -417,6 +425,9 @@ var evaluations = [];
 function showPageNumber(casenumber, jump) {
   var pos = $('#case_' + casenumber).position();
   var tpos = $('#thumb_' + casenumber).position();
+  if (casenumber == max_case_number - 1) {
+    summarizeProgress();
+  }
   if (jump) {
     $('#mainscroller').stop().scrollLeft(pos.left);
     $('#thumbscroller').stop().scrollLeft(tpos.left -
@@ -466,11 +477,24 @@ $(window).on('resize', function() {
       250);
 });
 
-$(document).on('focus', '.case-frame *', function() {
+$(document).on('focus', '.case-frame[id] *', function(ev) {
+  ev.stopPropagation()
+  var id = $(this).closest('.case-frame').prop('id');
+  if (id) {
+    var which = parseInt(id.replace(/case_/, ''));
+    if (which != current_case_number) {
+      current_case_number = which;
+      showPageNumber(which);
+    }
+  }
+});
+
+$(document).on('click', '.summary a[href]', function() {
   var which = parseInt(
-      $(this).closest('.case-frame').prop('id').replace(/case_/, ''));
+      $(this).attr('href').replace(/.*case_/, ''));
   current_case_number = which;
   showPageNumber(which);
+  return false;
 });
 
 $(document).on('click', '.next,.prev', function() {
@@ -489,7 +513,7 @@ $(document).on('change', '.category', function() {
 $(document).on('input change', function(e) {
   // Validate input
   var page = $(e.target).closest('.case-frame');
-  var casenum = page.prop('id').replace(/case_/,'');
+  var casenum = parseInt(page.prop('id').replace(/case_/,''));
   page.toggleClass('q1-done', page.find('td.cancelled').length >= 3);
   page.toggleClass('q2-done',
       !!page.find('.category').val() &&
@@ -499,8 +523,31 @@ $(document).on('input change', function(e) {
       !!page.find('input[name="confidence"]:checked').val())
   // Put a checkmark on the thumbnail.
   $('#thumb_' + casenum).toggleClass('finished',
-      page.hasClass('q1-done q2-done q3-done'));
+      page.hasClass('q1-done') &&
+      page.hasClass('q2-done') &&
+      page.hasClass('q3-done'));
 });
+
+function summarizeProgress() {
+  var alltask = $('.thumbsquare.task');
+  var unfinished = $('.thumbsquare.task:not(.finished)');
+  $('.summary .allnumbers').text('(' + (alltask.length - unfinished.length) +
+    '/' + alltask.length + ')');
+  if (unfinished.length) {
+    var text = '<p>Still unfinished:';
+    for (var j = 0; j < unfinished.length; ++j) {
+        var caseid = parseInt(unfinished.get(j).id.replace(/thumb_/, ''));
+        text += ' <a href="#case_' + (caseid) + '">puzzle #' +
+            (caseid+1) + '</a>';
+    }
+    text += '. <p>not yet ready to submit.';
+    $('#submit-btn').attr('disabled', 'disabled');
+  } else {
+    text = '<p>All puzzles done; ready to submit.';
+    $('#submit-btn').attr('disabled', null);
+  }
+  $('.summary .todo').html(text);
+}
 
 $(document).on('click', '#thumbstrip .thumbsquare', function() {
   var which = parseInt($(this).prop('id').replace(/thumb_/, ''));
@@ -578,7 +625,7 @@ $(document).on('keydown', function(ev) {
      ev.which == DOWN || ev.which == TAB)) {
     setDefaultPageFocus();
   } else if ($(document.activeElement).is("input[type=button]," +
-        "input[type=submit],button,select,input[type=radio]") &&
+        "input[type=submit],button,select,input[type=radio],a[href]") &&
     (ev.which == RIGHT || ev.which == LEFT)) {
     focusNextElement(ev.which == LEFT ? -1 : 1);
   } else if ($(document.activeElement).is("input[type=text]") &&
@@ -591,7 +638,7 @@ $(document).on('keydown', function(ev) {
     (!ev.shiftKey && !ev.ctrlKey)) {
     focusNextElement(-1);
   } else if ($(document.activeElement).is(
-        "input[type=button],input[type=text],input[type=submit],button") &&
+     "input[type=button],input[type=text],input[type=submit],button,a[href]") &&
     (ev.which == UP || ev.which == DOWN)) {
     focusNextElement(ev.which == UP ? -1 : 1);
   } else if ($(document.activeElement).is(
@@ -712,7 +759,7 @@ function main() {
           imgurl).appendTo(cell);
       if (k == 0) {
           // Use the first image as a thumbnail for the thumbstrip.
-          thumbdiv = $('<div class="thumbsquare" id="thumb_' + j + '">').
+          thumbdiv = $('<div class="thumbsquare task" id="thumb_' + j + '">').
               appendTo('#thumbstrip');
           thumb = $('<img>').attr('src', imgurl).appendTo(thumbdiv);
       }
@@ -741,10 +788,11 @@ function main() {
     // get an error message when you try and submit the HIT.
     simpleamt.setupSubmit();
 
+    // We need to move the simple-amt submit UI into a last submit page.
     var lastpage = $('<div class="case-frame container">').prop('id',
         "case_" + casecount).appendTo('#mainstrip');
     $('.template.finish').children().clone().appendTo(lastpage);
-    $('#results-form').appendTo(lastpage)
+    $('#results-form').appendTo(lastpage.find('.summary'))
     // Use the first image as a thumbnail for the thumbstrip.
     thumbdiv = $('<div class="thumbsquare" id="thumb_' + casecount + '">').
         appendTo('#thumbstrip');
