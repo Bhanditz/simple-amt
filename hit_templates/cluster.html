@@ -44,6 +44,10 @@ td {
 .btn.prev, .btn.next {
   margin-bottom: 5px;
 }
+.btn[disabled] {
+  border-color: silver;
+  background: silver;
+}
 
 .keying .case-grid img:focus {
   border: 3px dotted lightblue;
@@ -330,16 +334,19 @@ body:not(.keying) .case-grid td:first-of-type:not(.cancelled) img:hover,
 <div class="template instructions">
 <div class="regular-text">
 <h3>Which of these are not like the others?</h3>
-<p>This is a set of 20 puzzles, each with 20 highlighted pictures.
+<p>Each page has a puzzle with 20 highlighted pictures, some which do not
+belong with the others.
 <p>Do each puzzle in three steps:
 <ol>
 <li>Click the pictures that do not belong.
-<li>Describe the pattern by adding a few words to a sentence.
+<li>Describe the pattern of the pictures that <b>do</b> belong by
+adding a few words to a sentence.
 <li>Rate your confidence in your solution.
 </ol>
-<p>Cross out any pictures that do not belong before you write
+<p>Try to cross out any pictures that do not belong before you write
 the sentence.  You can go back and adjust your work at any time.
-Submit the HIT after all 20 puzzles are done.
+Submit the HIT using the green button on the last page after all
+the puzzles are done.
 <p>Keyboard shortcuts:
 <p>
 <table class="table-condensed" style="border:1px solid black">
@@ -540,7 +547,7 @@ function summarizeProgress() {
         text += ' <a href="#case_' + (caseid) + '">puzzle #' +
             (caseid+1) + '</a>';
     }
-    text += '. <p>not yet ready to submit.';
+    text += '. <p>Not yet ready to submit.';
     $('#submit-btn').attr('disabled', 'disabled');
   } else {
     text = '<p>All puzzles done; ready to submit.';
