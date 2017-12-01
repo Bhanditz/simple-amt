@@ -535,6 +535,8 @@ $(document).on('input change', function(e) {
       page.hasClass('q3-done'));
 });
 
+var output = null;
+
 function summarizeProgress() {
   var alltask = $('.thumbsquare.task');
   var unfinished = $('.thumbsquare.task:not(.finished)');
@@ -550,10 +552,33 @@ function summarizeProgress() {
     text += '. <p>Not yet ready to submit.';
     $('#submit-btn').attr('disabled', 'disabled');
   } else {
+    output = computeOutput();
     text = '<p>All puzzles done; ready to submit.';
     $('#submit-btn').attr('disabled', null);
   }
   $('.summary .todo').html(text);
+}
+
+function computeOutput() {
+  var results = [];
+  for (var j = 0; j < input.cases.length; ++j) {
+    results.push({
+      shown: input.cases[j],
+      received: collectCase(j)
+    });
+  }
+  return results;
+}
+
+function collectCase(casenum) {
+  var page = $('#case_' + casenum);
+  return {
+    removed: page.find('td.cancelled img').map(function() {
+      return parseInt(this.id.replace('img_', '').split('_')[1]) }),
+    category: page.find('.category').val(),
+    label: page.find('.lab').val(),
+    confidence: page.find('input[name="confidence"]:checked').val()
+  };
 }
 
 $(document).on('click', '#thumbstrip .thumbsquare', function() {
@@ -726,13 +751,14 @@ function donecount() {
 
 $(function() {
 
+var input = simpleamt.getInput(DEFAULT_INPUT);
+
 function main() {
   // Grab focus.
   $('#yes').focus();
 
   // Read input to the HIT. In development the default input will be
   // used, and in deployment actual input will be used.
-  var input = simpleamt.getInput(DEFAULT_INPUT);
   case_data = input.cases;
   var base_img = 'http://wednesday.csail.mit.edu/davidbau/relu5_img/conv5-';
 
@@ -762,7 +788,7 @@ function main() {
       }
       cell = $('<td>').appendTo(row);
       imgurl = base_img + rec[4] + '-' + rec[5] + '-' + rec[3] + '.jpg';
-      img = $('<img tabindex=0>').prop('id', 'img_' + j + '-' + k).attr('src',
+      img = $('<img tabindex=0>').prop('id', 'img_' + j + '_' + k).attr('src',
           imgurl).appendTo(cell);
       if (k == 0) {
           // Use the first image as a thumbnail for the thumbstrip.
@@ -816,20 +842,9 @@ function main() {
     // then by default the HIT will be submitted; this is a fertile
     // source of bugs.
     $('#submit-btn').click(function() {
-      // Construct an object containing the output of this assignment.
-      var output = {
-        cases: case_data,
-        evaluations: evaluations
-      };
-
       // Validate the output
-      if (evaluations.length < case_data.length ||
-          evaluations.indexOf(null) >= 0) {
-        alert('Some sets are still unfinished');
-        return false;
-      } else {
-        simpleamt.setOutput(output);
-      }
+      var out = computeOutput();
+      simpleamt.setOutput(out);
     })
   }
 }
