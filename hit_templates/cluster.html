@@ -369,6 +369,7 @@ the puzzles are done.
 <p>
 Most of these pictures have something in common in
 highlighted areas, but some are not like the others.
+(<a href="http://wednesday.csail.mit.edu/davidbau/unlike/instructions.html" target="_blank">Detailed instructions</a>)
 <div class="q1">
 <p>1. Click to cross out <b>3 or more</b> that do not belong.
 </div>
@@ -804,6 +805,7 @@ function main() {
   case_data = inp.cases;
   var base_img = 'http://wednesday.csail.mit.edu/davidbau/relu5_img/conv5-';
 
+  /*
   var firstpage = $('<div class="case-frame">').prop('id',
       "case_-1").appendTo('#mainstrip');
   $('.template.instructions').children().clone().appendTo(firstpage);
@@ -814,6 +816,7 @@ function main() {
   var thumb = $('<img>').attr('src',
         'https://i.imgur.com/OfqDPKC.png').
         appendTo(thumbdiv);
+  */
   var casecount = inp.cases.length;
   $('#totalcount').text(casecount);
   for (var j = 0; j < casecount; ++j) {
@@ -842,7 +845,8 @@ function main() {
     var form = $('<form class="case-form">').appendTo(div);
     $('.template.page').children().clone().appendTo(form);
     if (j == 0) {
-      form.find('.prev').val('\u2190 Instructions (pageup)');
+      // form.find('.prev').val('\u2190 Instructions (pageup)');
+      form.find('.prev').hide();
     }
     form.find('.number').text('(' + (j+1) + '/' + casecount + ')');
     // These forms do not submit.
